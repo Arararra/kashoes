@@ -20,6 +20,8 @@ return new class extends Migration
             $table->unsignedBigInteger('service');
             $table->date('estimated_date');
             $table->integer('quantity');
+            $table->decimal('total_price', 10, 2);
+            $table->enum('status', ['pending', 'processing', 'ready', 'completed'])->default('pending');
             $table->timestamps();
 
             $table->foreign('customer')->references('id')->on('users')->onDelete('cascade');

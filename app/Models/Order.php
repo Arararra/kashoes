@@ -14,6 +14,8 @@ class Order extends Model
         'service',
         'estimated_date',
         'quantity',
+        'total_price',
+        'status',
     ];
 
     public function customer()
