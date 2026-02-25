@@ -13,19 +13,15 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('customer');
-            $table->string('customer_name');
-            $table->string('customer_phone');
-            $table->text('customer_address');
-            $table->unsignedBigInteger('service');
+            $table->foreignId('customer_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('service_id')->nullable()->constrained('services')->nullOnDelete(); // Add service_id for the relationship
+            $table->json('services');
+            $table->decimal('total_price', 15, 2)->default(0);
+            $table->enum('status', ['pending','in_progress','ready_for_pickup','completed','cancelled'])->default('pending');
             $table->date('estimated_date');
-            $table->integer('quantity');
-            $table->decimal('total_price', 10, 2);
-            $table->enum('status', ['pending', 'processing', 'ready', 'completed'])->default('pending');
+            $table->date('finished_date')->nullable();
             $table->timestamps();
-
-            $table->foreign('customer')->references('id')->on('users')->onDelete('cascade');
-            $table->foreign('service')->references('id')->on('services')->onDelete('cascade');
+            $table->softDeletes();
         });
     }
 

@@ -3,28 +3,35 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Order extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
-        'customer',
-        'customer_name',
-        'customer_phone',
-        'customer_address',
-        'service',
-        'estimated_date',
-        'quantity',
+        'customer_id',
+        'services',
         'total_price',
         'status',
+        'estimated_date',
+        'finished_date',
+    ];
+
+    protected $casts = [
+        'services' => 'array',
+        'estimated_date' => 'date',
+        'finished_date' => 'date',
+        'total_price' => 'decimal:2',
     ];
 
     public function customer()
     {
-        return $this->belongsTo(User::class, 'customer')->where('role', 'customer');
+        return $this->belongsTo(User::class, 'customer_id');
     }
 
     public function service()
     {
-        return $this->belongsTo(Service::class, 'service');
+        return $this->belongsTo(Service::class, 'service_id');
     }
 }
