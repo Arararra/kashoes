@@ -20,6 +20,7 @@ class Order extends Model
         'status',
         'estimated_date',
         'finished_date',
+        'created_by'
     ];
 
     protected $casts = [

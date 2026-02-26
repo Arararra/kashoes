@@ -10,11 +10,12 @@ class Service extends Model
     protected $fillable = [
         'name',
         'price',
+        'created_by'
     ];
 
     public function orders()
     {
-        return $this->hasMany(Order::class, 'service');
+        return $this->hasMany(Order::class, 'service_id');
     }
 
     /**
