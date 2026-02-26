@@ -8,6 +8,9 @@ use App\Models\Service;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Card;
+use Filament\Forms\Components\Placeholder;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -25,12 +28,34 @@ class ServiceResource extends Resource
     {
         return $form
             ->schema([
-                TextInput::make('name')
-                    ->required()
-                    ->maxLength(255),
-                TextInput::make('price')
-                    ->required()
-                    ->numeric(),
+                Grid::make(3)
+                    ->schema([
+                        Card::make([
+                            TextInput::make('name')
+                                ->required()
+                                ->maxLength(255)
+                                ->columnSpanFull(),
+
+                            TextInput::make('price')
+                                ->required()
+                                ->numeric()
+                                ->columnSpanFull(),
+                        ])->columns(2)->columnSpan(2),
+
+                        Card::make([
+                            Placeholder::make('created_by')
+                                ->label('Created By')
+                                ->content(fn (?Service $record): string => $record?->creator?->name ?? 'N/A'),
+
+                            Placeholder::make('created_at')
+                                ->label('Created At')
+                                ->content(fn (?Service $record): string => $record?->created_at?->format('Y-m-d H:i:s') ?? 'N/A'),
+
+                            Placeholder::make('updated_at')
+                                ->label('Updated At')
+                                ->content(fn (?Service $record): string => $record?->updated_at?->format('Y-m-d H:i:s') ?? 'N/A'),
+                        ])->columnSpan(1),
+                    ]),
             ]);
     }
 
