@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Models\User;
 use App\Models\Order;
 use App\Models\Service;
 use App\Filament\Resources\OrderResource\Pages;
@@ -14,6 +15,7 @@ use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\TextArea;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Card;
@@ -43,16 +45,50 @@ class OrderResource extends Resource
                             Fieldset::make('Customer Information')
                                 ->schema([
                                     Select::make('customer_id')
-                                        ->required(),
-                                ]),
+                                        ->relationship(
+                                            name: 'customer',
+                                            titleAttribute: 'name',
+                                            modifyQueryUsing: fn ($query) => $query->role('customer')
+                                        )
+                                        ->searchable()
+                                        ->preload()
+                                        ->columnSpanFull()
+                                        ->required()
+                                        ->reactive()
+                                        ->afterStateUpdated(function ($state, Set $set) {
+                                            $customer = User::find($state);
+                                            if ($customer) {
+                                                $set('customer_name', $customer->name);
+                                                $set('customer_phone', $customer->phone);
+                                                $set('customer_address', $customer->address);
+                                            }
+                                        }),
+
+                                    TextInput::make('customer_name')
+                                        ->label('Name')
+                                        ->required()
+                                        ->disabled(fn (Get $get) => ! $get('customer_id'))
+                                        ->dehydrated(),
+
+                                    TextInput::make('customer_phone')
+                                        ->label('Phone')
+                                        ->required()
+                                        ->disabled(fn (Get $get) => ! $get('customer_id'))
+                                        ->dehydrated(),
+
+                                    TextArea::make('customer_address')
+                                        ->label('Address')
+                                        ->columnSpanFull()
+                                        ->required()
+                                        ->disabled(fn (Get $get) => ! $get('customer_id'))
+                                        ->dehydrated(),
+                                ])
+                                ->columns(2),
 
                             Fieldset::make('Order Details')
                                 ->schema([
                                     Repeater::make('services')
                                         ->schema([
-                                            TextInput::make('name')
-                                                ->label('Name')
-                                                ->required(),
                                             Select::make('service_id')
                                                 ->label('Service')
                                                 ->options(Service::pluck('name', 'id'))
@@ -62,23 +98,11 @@ class OrderResource extends Resource
                                                     $service = Service::find($state);
                                                     $quantity = (int) $get('quantity');
                                                     $price = ($service?->price ?? 0) * ($quantity ?: 1);
-
                                                     $set('price', $price);
-                                                }),
-                                            TextInput::make('quantity')
-                                                ->label('Quantity')
-                                                ->required()
-                                                ->numeric()
-                                                ->minValue(1)
-                                                ->default(1)
-                                                ->reactive()
-                                                ->afterStateUpdated(function ($state, Set $set, Get $get) {
-                                                    $serviceId = $get('service_id');
-                                                    $service = Service::find($serviceId);
 
-                                                    $price = ($service?->price ?? 0) * ((int) $state ?: 1);
-
-                                                    $set('price', $price);
+                                                    $services = $get('services') ?? [];
+                                                    $totalPrice = collect($services)->sum(fn ($service) => ($service['price'] ?? 0));
+                                                    $set('total_price', $totalPrice);
                                                 }),
                                             TextInput::make('price')
                                                 ->label('Total Price')
@@ -86,9 +110,36 @@ class OrderResource extends Resource
                                                 ->disabled()
                                                 ->dehydrated()
                                                 ->required(),
+                                            TextInput::make('quantity')
+                                                ->label('Quantity')
+                                                ->required()
+                                                ->columnSpanFull()
+                                                ->numeric()
+                                                ->minValue(1)
+                                                ->default(1)
+                                                ->reactive()
+                                                ->afterStateUpdated(function ($state, Set $set, Get $get) {
+                                                    $serviceId = $get('service_id');
+                                                    $service = Service::find($serviceId);
+                                                    $price = ($service?->price ?? 0) * ((int) $state ?: 1);
+                                                    $set('price', $price);
+
+                                                    $services = $get('services') ?? [];
+                                                    $totalPrice = collect($services)->sum(fn ($service) => ($service['price'] ?? 0));
+                                                    $set('total_price', $totalPrice);
+                                                }),
+                                            TextArea::make('description')
+                                                ->label('Description')
+                                                ->required()
+                                                ->columnSpanFull(),
                                         ])
                                         ->columns(2)
-                                        ->columnSpanFull(),
+                                        ->columnSpanFull()
+                                        ->reactive()
+                                        ->afterStateUpdated(function ($state, Set $set) {
+                                            $totalPrice = collect($state)->sum(fn ($service) => ($service['price'] ?? 0));
+                                            $set('total_price', $totalPrice);
+                                        }),
 
                                     DatePicker::make('estimated_date')
                                         ->required(),
@@ -109,6 +160,7 @@ class OrderResource extends Resource
                                             'completed' => 'Sudah Diambil',
                                             'cancelled' => 'Dibatalkan',
                                         ])
+                                        ->default('pending')
                                         ->required(),
                                 ]),
                         ])->columns(2)->columnSpan(2),
