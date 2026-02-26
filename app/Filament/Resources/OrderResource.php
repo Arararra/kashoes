@@ -130,7 +130,7 @@ class OrderResource extends Resource
                                 Select::make('status')
                                     ->options([
                                         'pending' => 'Pending',
-                                        'processing' => 'Diproses',
+                                        'in_progress' => 'Diproses',
                                         'ready_for_pickup' => 'Siap Diambil',
                                         'completed' => 'Sudah Diambil',
                                         'cancelled' => 'Dibatalkan',
@@ -159,20 +159,14 @@ class OrderResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('customer.name')->searchable(),
-
-                TextColumn::make('services')
-                    ->formatStateUsing(fn ($state) => collect($state)->pluck('description')->join(', ')),
-
                 TextColumn::make('estimated_date')->date(),
                 TextColumn::make('finished_date')->date(),
-
                 TextColumn::make('total_price')->money('USD'),
-
                 TextColumn::make('status')
                     ->badge()
                     ->formatStateUsing(fn ($state) => match ($state) {
                         'pending' => 'Pending',
-                        'processing' => 'Diproses',
+                        'in_progress' => 'Diproses',
                         'ready_for_pickup' => 'Siap Diambil',
                         'completed' => 'Sudah Diambil',
                         'cancelled' => 'Dibatalkan',
@@ -180,7 +174,7 @@ class OrderResource extends Resource
                     })
                     ->color(fn ($state) => match ($state) {
                         'pending' => 'primary',
-                        'processing' => 'warning',
+                        'in_progress' => 'warning',
                         'ready_for_pickup' => 'info',
                         'completed' => 'success',
                         'cancelled' => 'danger',
@@ -189,7 +183,7 @@ class OrderResource extends Resource
             ->filters([
                 SelectFilter::make('status')->options([
                     'pending' => 'Pending',
-                    'processing' => 'Diproses',
+                    'in_progress' => 'Diproses',
                     'ready_for_pickup' => 'Siap Diambil',
                     'completed' => 'Sudah Diambil',
                     'cancelled' => 'Dibatalkan',

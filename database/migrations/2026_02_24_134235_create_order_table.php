@@ -14,7 +14,6 @@ return new class extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('customer_id')->constrained('users')->cascadeOnDelete();
-            $table->foreignId('service_id')->nullable()->constrained('services')->nullOnDelete(); // Add service_id for the relationship
             $table->json('services');
             $table->decimal('total_price', 15, 2)->default(0);
             $table->enum('status', ['pending','in_progress','ready_for_pickup','completed','cancelled'])->default('pending');
