@@ -161,7 +161,7 @@ class OrderResource extends Resource
                 TextColumn::make('customer.name')->searchable(),
                 TextColumn::make('estimated_date')->date(),
                 TextColumn::make('finished_date')->date(),
-                TextColumn::make('total_price')->money('USD'),
+                TextColumn::make('total_price')->money('IDR'),
                 TextColumn::make('status')
                     ->badge()
                     ->formatStateUsing(fn ($state) => match ($state) {
@@ -179,6 +179,8 @@ class OrderResource extends Resource
                         'completed' => 'success',
                         'cancelled' => 'danger',
                     }),
+                TextColumn::make('creator.name')
+                    ->label('Input By'),
             ])
             ->filters([
                 SelectFilter::make('status')->options([
