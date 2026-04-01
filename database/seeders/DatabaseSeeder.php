@@ -18,16 +18,8 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             RoleSeeder::class,
+            ServiceSeeder::class,
+            UserSeeder::class,
         ]);
-
-        $superAdmin = User::firstOrCreate(
-            ['email' => 'superadmin@gmail.com'],
-            [
-                'name' => 'Super Admin',
-                'password' => Hash::make('admin123'),
-            ]
-        );
-
-        $superAdmin->assignRole('super_admin');
     }
 }
