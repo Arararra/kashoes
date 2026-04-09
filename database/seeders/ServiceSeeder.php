@@ -14,10 +14,12 @@ class ServiceSeeder extends Seeder
     public function run(): void
     {
         $services = [
-            ['name' => 'Shoe Cleaning', 'price' => 10000.00],
-            ['name' => 'Shoe Polishing', 'price' => 15000.00],
-            ['name' => 'Shoe Repair', 'price' => 20000.00],
-            ['name' => 'Shoe Customization', 'price' => 25000.00],
+            ['name' => 'Deep Clean', 'price' => 25000.00],
+            ['name' => 'White Shoes', 'price' => 35000.00],
+            ['name' => 'Fast Clean', 'price' => 50000.00],
+            ['name' => 'Girl/Kid Shoes/Sandal', 'price' => 20000.00],
+            ['name' => 'Unyellowing', 'price' => 30000.00],
+            ['name' => 'Repaint', 'price' => 75000.00],
         ];
 
         foreach ($services as $service) {
