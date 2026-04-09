@@ -132,7 +132,7 @@ class OrderResource extends Resource
                                         'pending' => 'Pending',
                                         'in_progress' => 'Diproses',
                                         'ready_for_pickup' => 'Siap Diambil',
-                                        'completed' => 'Sudah Diambil',
+                                        'completed' => 'Selesai',
                                         'cancelled' => 'Dibatalkan',
                                     ])
                                     ->default('pending')
