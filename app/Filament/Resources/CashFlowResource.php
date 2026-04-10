@@ -28,9 +28,9 @@ class CashFlowResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $navigationLabel = 'Cashflow';
+    protected static ?string $navigationLabel = 'Cash Flow';
 
-    protected static ?string $navigationGroup = 'Data Keuangan';
+    protected static ?string $navigationGroup = 'Finance';
 
     protected static ?int $navigationSort = 2;
 
