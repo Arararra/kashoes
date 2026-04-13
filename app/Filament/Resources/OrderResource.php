@@ -32,6 +32,10 @@ class OrderResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    protected static ?string $navigationLabel = 'Orders';
+
+    protected static ?string $navigationGroup = 'Finance';
+
     public static function form(Form $form): Form
     {
         return $form
