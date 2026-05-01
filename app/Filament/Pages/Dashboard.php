@@ -3,27 +3,35 @@
 namespace App\Filament\Pages;
 
 use Filament\Pages\Dashboard as BaseDashboard;
-use App\Filament\Widgets\NewCustomersWidget;
-use App\Filament\Widgets\OrdersWidget;
-use App\Filament\Widgets\RevenueWidget;
+use App\Filament\Widgets\StatsOverviewWidget;
+use App\Filament\Widgets\RevenueChartWidget;
+use App\Filament\Widgets\LatestOrdersWidget;
+use App\Filament\Widgets\OrderStatusChartWidget;
+use App\Filament\Widgets\TopServicesWidget;
 
 class Dashboard extends BaseDashboard
 {
-    protected function getHeaderWidgets(): array
+    protected static ?string $navigationIcon = 'heroicon-o-home';
+
+    protected static ?string $title = 'Dashboard';
+
+    public function getWidgets(): array
     {
         return [
-            NewCustomersWidget::class,
-            OrdersWidget::class,
-            RevenueWidget::class,
+            StatsOverviewWidget::class,
+            RevenueChartWidget::class,
+            LatestOrdersWidget::class,
+            OrderStatusChartWidget::class,
+            TopServicesWidget::class,
         ];
     }
 
     public function getColumns(): int|array
     {
         return [
-            'default' => 12,
-            'md' => 12,
-            'lg' => 12,
+            'default' => 1,
+            'md'      => 2,
+            'xl'      => 2,
         ];
     }
 }
