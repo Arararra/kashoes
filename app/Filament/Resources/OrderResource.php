@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources;
 
-use App\Models\User;
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Service;
 use Filament\Forms;
@@ -45,10 +45,10 @@ class OrderResource extends Resource
                         Fieldset::make('Customer Information')
                             ->schema([
                                 Select::make('customer_id')
+                                    ->label('Customer')
                                     ->relationship(
                                         name: 'customer',
                                         titleAttribute: 'name',
-                                        modifyQueryUsing: fn ($query) => $query->role('customer')
                                     )
                                     ->searchable()
                                     ->preload()
@@ -56,7 +56,7 @@ class OrderResource extends Resource
                                     ->required()
                                     ->reactive()
                                     ->afterStateUpdated(function ($state, Set $set) {
-                                        $customer = User::find($state);
+                                        $customer = Customer::find($state);
                                         if ($customer) {
                                             $set('customer_name', $customer->name);
                                             $set('customer_phone', $customer->phone);
@@ -69,16 +69,19 @@ class OrderResource extends Resource
                                     }),
 
                                 TextInput::make('customer_name')
+                                    ->label('Nama Customer')
                                     ->required()
                                     ->disabled(fn (Get $get) => ! $get('customer_id'))
                                     ->dehydrated(),
 
                                 TextInput::make('customer_phone')
+                                    ->label('No Telepon')
                                     ->required()
                                     ->disabled(fn (Get $get) => ! $get('customer_id'))
                                     ->dehydrated(),
 
                                 TextArea::make('customer_address')
+                                    ->label('Alamat')
                                     ->columnSpanFull()
                                     ->required()
                                     ->disabled(fn (Get $get) => ! $get('customer_id'))
@@ -114,18 +117,25 @@ class OrderResource extends Resource
 
                                         TextArea::make('description')
                                             ->columnSpanFull()
-                                            ->required(),
+                                            ->required()
+                                            ->live(onBlur: true),
                                     ])
                                     ->columns(2)
                                     ->columnSpanFull()
+                                    ->addActionLabel('Add another service')
                                     ->deleteAction(
                                         fn ($action) => $action->after(
                                             fn (Get $get, Set $set) => self::recalculateTotal($get, $set)
                                         )
                                     ),
 
-                                DatePicker::make('estimated_date')->required(),
-                                DatePicker::make('finished_date')->nullable(),
+                                DatePicker::make('estimated_finished_date')
+                                    ->label('Estimated Finished Date')
+                                    ->required(),
+
+                                DatePicker::make('finished_date')
+                                    ->label('Finished Date')
+                                    ->nullable(),
 
                                 TextInput::make('total_price')
                                     ->numeric()
@@ -162,9 +172,9 @@ class OrderResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('customer.name')->searchable(),
-                TextColumn::make('estimated_date')->date(),
-                TextColumn::make('finished_date')->date(),
+                TextColumn::make('customer.name')->label('Customer')->searchable(),
+                TextColumn::make('estimated_finished_date')->label('Est. Finished Date')->date(),
+                TextColumn::make('finished_date')->label('Finished Date')->date()->placeholder('—'),
                 TextColumn::make('total_price')->money('IDR'),
                 TextColumn::make('status')
                     ->badge()
