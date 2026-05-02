@@ -7,5 +7,10 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/reports/export/excel', [ReportController::class, 'exportToExcel'])->name('reports.export.excel');
-Route::get('/reports/export/pdf', [ReportController::class, 'exportToPdf'])->name('reports.export.pdf');
+Route::middleware(['auth'])->group(function () {
+    Route::get('/reports/export/excel', [ReportController::class, 'exportToExcel'])
+        ->name('reports.export.excel');
+
+    Route::get('/reports/export/pdf', [ReportController::class, 'exportToPdf'])
+        ->name('reports.export.pdf');
+});

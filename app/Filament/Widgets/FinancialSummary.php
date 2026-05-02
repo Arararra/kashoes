@@ -30,9 +30,9 @@ class FinancialSummary extends BaseWidget
         $balance = $income - $expenses;
 
         return [
-            Stat::make('Total Income', '$' . number_format($income, 2)),
-            Stat::make('Total Expenses', '$' . number_format($expenses, 2)),
-            Stat::make('Balance', '$' . number_format($balance, 2)),
+            Stat::make('Total Income', 'Rp. ' . number_format($income, 2)),
+            Stat::make('Total Expenses', 'Rp. ' . number_format($expenses, 2)),
+            Stat::make('Balance', 'Rp. ' . number_format($balance, 2)),
         ];
     }
 }

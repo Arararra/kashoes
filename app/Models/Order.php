@@ -17,6 +17,7 @@ class Order extends Model
         'customer_address',
         'services',
         'total_price',
+        'discount',
         'status',
         'estimated_finished_date',
         'finished_date',
@@ -28,6 +29,7 @@ class Order extends Model
         'estimated_finished_date' => 'date',
         'finished_date' => 'date',
         'total_price' => 'decimal:2',
+        'discount' => 'decimal:2',
     ];
 
     public function customer(): BelongsTo
