@@ -1,4 +1,5 @@
 <?php
+
 // app/Filament/Pages/Report.php
 
 namespace App\Filament\Pages;
@@ -7,30 +8,47 @@ use App\Models\CashFlow;
 use App\Models\Order;
 use App\Models\Service;
 use Carbon\Carbon;
-use Filament\Pages\Page;
 use Filament\Actions\Action;
+use Filament\Pages\Page;
 
 class Report extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
+
     protected static ?string $navigationLabel = 'Report';
+
     protected static ?string $navigationGroup = 'Finance';
+
     protected static ?int $navigationSort = 1;
+
     protected static string $view = 'filament.pages.report';
 
     public string $filterMonth;
+
     public string $filterYear;
 
     public function mount(): void
     {
-        $this->filterMonth = now()->format('m');
-        $this->filterYear  = now()->format('Y');
+        // Cari bulan terakhir yang punya data
+        $lastMonthWithData = CashFlow::selectRaw('year(date) as year, month(date) as month')
+            ->groupByRaw('year(date), month(date)')
+            ->orderByRaw('year(date) desc, month(date) desc')
+            ->first();
+
+        if ($lastMonthWithData) {
+            $this->filterMonth = str_pad($lastMonthWithData->month, 2, '0', STR_PAD_LEFT);
+            $this->filterYear = $lastMonthWithData->year;
+        } else {
+            // Fallback jika belum ada data
+            $this->filterMonth = now()->format('m');
+            $this->filterYear = now()->format('Y');
+        }
     }
 
     protected function getViewData(): array
     {
         $month = (int) $this->filterMonth;
-        $year  = (int) $this->filterYear;
+        $year = (int) $this->filterYear;
 
         // ── Cash Flow records ──────────────────────────────────────────
         $cashFlows = CashFlow::whereMonth('date', $month)
@@ -38,9 +56,9 @@ class Report extends Page
             ->orderBy('date', 'desc')
             ->get();
 
-        $totalIncome  = $cashFlows->where('type', 'income')->sum('amount');
+        $totalIncome = $cashFlows->where('type', 'income')->sum('amount');
         $totalExpense = $cashFlows->where('type', 'expense')->sum('amount');
-        $saldoAkhir   = $totalIncome - $totalExpense;
+        $saldoAkhir = $totalIncome - $totalExpense;
 
         // ── Total penjualan per service (fix N+1) ──────────────────────
         $orders = Order::whereMonth('created_at', $month)
@@ -64,53 +82,53 @@ class Report extends Page
         foreach ($orders as $order) {
             foreach ((array) $order->services as $item) {
                 $serviceId = $item['service_id'] ?? null;
-                $qty       = (int) ($item['quantity'] ?? 1);
-                $price     = (float) ($item['price'] ?? 0);
+                $qty = (int) ($item['quantity'] ?? 1);
+                $price = (float) ($item['price'] ?? 0);
 
                 if ($serviceId) {
-                    if (!isset($serviceSales[$serviceId])) {
+                    if (! isset($serviceSales[$serviceId])) {
                         $serviceSales[$serviceId] = [
-                            'name'     => $serviceMap[$serviceId] ?? 'Service #' . $serviceId,
+                            'name' => $serviceMap[$serviceId] ?? 'Service #'.$serviceId,
                             'quantity' => 0,
-                            'revenue'  => 0,
+                            'revenue' => 0,
                         ];
                     }
                     $serviceSales[$serviceId]['quantity'] += $qty;
-                    $serviceSales[$serviceId]['revenue']  += $price;
+                    $serviceSales[$serviceId]['revenue'] += $price;
                 }
             }
         }
-        usort($serviceSales, fn($a, $b) => $b['revenue'] <=> $a['revenue']);
+        usort($serviceSales, fn ($a, $b) => $b['revenue'] <=> $a['revenue']);
 
         // ── Grafik 6 bulan ─────────────────────────────────────────────
         $chartData = [];
         for ($i = 5; $i >= 0; $i--) {
             $date = Carbon::now()->subMonths($i);
-            $inc  = CashFlow::where('type', 'income')
+            $inc = CashFlow::where('type', 'income')
                 ->whereYear('date', $date->year)
                 ->whereMonth('date', $date->month)
                 ->sum('amount');
-            $exp  = CashFlow::where('type', 'expense')
+            $exp = CashFlow::where('type', 'expense')
                 ->whereYear('date', $date->year)
                 ->whereMonth('date', $date->month)
                 ->sum('amount');
             $chartData[] = [
-                'label'   => $date->translatedFormat('M Y'),
-                'income'  => (float) $inc,
+                'label' => $date->translatedFormat('M Y'),
+                'income' => (float) $inc,
                 'expense' => (float) $exp,
             ];
         }
 
         return [
-            'cashFlows'    => $cashFlows,
-            'totalIncome'  => $totalIncome,
+            'cashFlows' => $cashFlows,
+            'totalIncome' => $totalIncome,
             'totalExpense' => $totalExpense,
-            'saldoAkhir'   => $saldoAkhir,
+            'saldoAkhir' => $saldoAkhir,
             'serviceSales' => $serviceSales,
-            'chartData'    => $chartData,
-            'month'        => $month,
-            'year'         => $year,
-            'monthLabel'   => Carbon::createFromDate($year, $month, 1)->translatedFormat('F Y'),
+            'chartData' => $chartData,
+            'month' => $month,
+            'year' => $year,
+            'monthLabel' => Carbon::createFromDate($year, $month, 1)->translatedFormat('F Y'),
         ];
     }
 
@@ -123,7 +141,7 @@ class Report extends Page
                 ->icon('heroicon-o-table-cells')
                 ->url(fn () => route('reports.export.excel', [
                     'month' => $this->filterMonth,
-                    'year'  => $this->filterYear,
+                    'year' => $this->filterYear,
                 ]))
                 ->openUrlInNewTab(),
 
@@ -133,7 +151,7 @@ class Report extends Page
                 ->icon('heroicon-o-document-arrow-down')
                 ->url(fn () => route('reports.export.pdf', [
                     'month' => $this->filterMonth,
-                    'year'  => $this->filterYear,
+                    'year' => $this->filterYear,
                 ]))
                 ->openUrlInNewTab(),
 
@@ -143,14 +161,14 @@ class Report extends Page
                 ->color('success')
                 ->icon('heroicon-o-arrow-trending-up')
                 ->url(fn () => route('filament.admin.resources.cash-flows.index')
-                    . '?tableFilters[type][value]=income'),
+                    .'?tableFilters[type][value]=income'),
 
             Action::make('filterExpense')
                 ->label('Lihat Detail Pengeluaran')
                 ->color('danger')
                 ->icon('heroicon-o-arrow-trending-down')
                 ->url(fn () => route('filament.admin.resources.cash-flows.index')
-                    . '?tableFilters[type][value]=expense'),
+                    .'?tableFilters[type][value]=expense'),
         ];
     }
 }
