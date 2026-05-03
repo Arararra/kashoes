@@ -89,11 +89,19 @@ class CashFlowResource extends Resource
                     ->date()
                     ->sortable(),
 
-                BadgeColumn::make('type')
-                    ->colors([
-                        'success' => 'income',
-                        'danger' => 'expense',
-                    ]),
+                // Ganti BadgeColumn dengan TextColumn::badge() (tidak deprecated)
+                TextColumn::make('type')
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        'income'  => 'success',
+                        'expense' => 'danger',
+                        default   => 'gray',
+                    })
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'income'  => 'Pemasukan',
+                        'expense' => 'Pengeluaran',
+                        default   => $state,
+                    }),
 
                 TextColumn::make('title')
                     ->searchable(),
@@ -106,7 +114,12 @@ class CashFlowResource extends Resource
                     ->label('Input By'),
             ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('type')
+                    ->label('Tipe')
+                    ->options([
+                        'income'  => 'Pemasukan',
+                        'expense' => 'Pengeluaran',
+                    ]),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

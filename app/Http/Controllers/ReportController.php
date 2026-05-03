@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Exports\ReportExport;
 use App\Models\CashFlow;
+use App\Models\Order;
+use App\Models\Service;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -15,7 +17,10 @@ class ReportController extends Controller
     {
         $data = $this->getReportData($request);
 
-        return Excel::download(new ReportExport($data), 'report_'.now()->format('Y_m').'.xlsx');
+        $month = str_pad($request->input('month', now()->month), 2, '0', STR_PAD_LEFT);
+        $year  = $request->input('year', now()->year);
+
+        return Excel::download(new ReportExport($data), "laporan_{$year}_{$month}.xlsx");
     }
 
     public function exportToPdf(Request $request)
@@ -25,57 +30,76 @@ class ReportController extends Controller
 
         $pdf = PDF::loadView('exports.report', $data);
 
-        return $pdf->download('report_'.now()->format('Y_m').'.pdf');
+        $month = str_pad($request->input('month', now()->month), 2, '0', STR_PAD_LEFT);
+        $year  = $request->input('year', now()->year);
+
+        return $pdf->download("laporan_{$year}_{$month}.pdf");
     }
 
     private function getReportData(Request $request): array
     {
-        $query = $this->getFilteredCashFlows($request);
-        $cashFlows = $query->get();
+        $month = (int) $request->input('month', now()->month);
+        $year  = (int) $request->input('year', now()->year);
 
-        $income = $cashFlows->where('type', 'income')->sum('amount');
+        $cashFlows = CashFlow::with('creator')
+            ->whereMonth('date', $month)
+            ->whereYear('date', $year)
+            ->orderBy('date', 'desc')
+            ->get();
+
+        $income   = $cashFlows->where('type', 'income')->sum('amount');
         $expenses = $cashFlows->where('type', 'expense')->sum('amount');
 
-        return [
-            'cashFlows' => $cashFlows,
-            'income' => $income,
-            'expenses' => $expenses,
-            'netFlow' => $income - $expenses,
-            'details' => $cashFlows->map(function (CashFlow $flow) {
-                return [
-                    'date' => $flow->date->format('Y-m-d'),
-                    'type' => ucfirst($flow->type),
-                    'title' => $flow->title,
-                    'description' => $flow->description,
-                    'created_by' => $flow->creator?->name ?? 'N/A',
-                    'amount' => (float) $flow->amount,
-                ];
-            })->toArray(),
-            'filter' => $request->input('filter', 'all'),
-            'start_date' => $request->input('start_date'),
-            'end_date' => $request->input('end_date'),
-            'month' => Carbon::now()->month,
-            'year' => Carbon::now()->year,
-        ];
-    }
+        // ── Service sales ──────────────────────────────────────────────
+        $orders = Order::whereMonth('created_at', $month)
+            ->whereYear('created_at', $year)
+            ->whereNotNull('services')
+            ->get();
 
-    private function getFilteredCashFlows(Request $request)
-    {
-        $filter = $request->input('filter');
-        $query = CashFlow::query()->with('creator')->orderBy('date', 'desc');
-
-        if ($filter === 'daily') {
-            $query->whereDate('date', Carbon::today());
-        } elseif ($filter === 'weekly') {
-            $query->whereBetween('date', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
-        } elseif ($filter === 'monthly') {
-            $query->whereMonth('date', Carbon::now()->month)->whereYear('date', Carbon::now()->year);
-        } elseif ($filter === 'yearly') {
-            $query->whereYear('date', Carbon::now()->year);
-        } elseif ($filter === 'custom' && $request->filled('start_date') && $request->filled('end_date')) {
-            $query->whereBetween('date', [$request->input('start_date'), $request->input('end_date')]);
+        $serviceSales = [];
+        foreach ($orders as $order) {
+            foreach ((array) $order->services as $item) {
+                $serviceId = $item['service_id'] ?? null;
+                $qty       = (int) ($item['quantity'] ?? 1);
+                $price     = (float) ($item['price'] ?? 0);
+                if ($serviceId) {
+                    if (!isset($serviceSales[$serviceId])) {
+                        $svc = Service::find($serviceId);
+                        $serviceSales[$serviceId] = [
+                            'name'     => $svc?->name ?? 'Service #' . $serviceId,
+                            'quantity' => 0,
+                            'revenue'  => 0,
+                        ];
+                    }
+                    $serviceSales[$serviceId]['quantity'] += $qty;
+                    $serviceSales[$serviceId]['revenue']  += $price;
+                }
+            }
         }
+        usort($serviceSales, fn($a, $b) => $b['revenue'] <=> $a['revenue']);
 
-        return $query;
+        $monthLabel = Carbon::createFromDate($year, $month, 1)->translatedFormat('F Y');
+
+        return [
+            'cashFlows'    => $cashFlows,
+            'income'       => $income,
+            'expenses'     => $expenses,
+            'netFlow'      => $income - $expenses,
+            'serviceSales' => $serviceSales,
+            'details'      => $cashFlows->map(fn (CashFlow $flow) => [
+                'date'        => $flow->date->format('Y-m-d'),
+                'type'        => $flow->type === 'income' ? 'Pemasukan' : 'Pengeluaran',
+                'title'       => $flow->title,
+                'description' => $flow->description,
+                'created_by'  => $flow->creator?->name ?? 'N/A',
+                'amount'      => (float) $flow->amount,
+            ])->toArray(),
+            'filter'     => 'monthly',
+            'start_date' => Carbon::createFromDate($year, $month, 1)->format('Y-m-d'),
+            'end_date'   => Carbon::createFromDate($year, $month, 1)->endOfMonth()->format('Y-m-d'),
+            'month'      => $month,
+            'year'       => $year,
+            'monthLabel' => $monthLabel,
+        ];
     }
 }
