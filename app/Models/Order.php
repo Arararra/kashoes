@@ -17,25 +17,27 @@ class Order extends Model
         'customer_address',
         'services',
         'total_price',
+        'discount',
         'status',
-        'estimated_date',
+        'estimated_finished_date',
         'finished_date',
         'created_by'
     ];
 
     protected $casts = [
         'services' => 'array',
-        'estimated_date' => 'date',
+        'estimated_finished_date' => 'date',
         'finished_date' => 'date',
         'total_price' => 'decimal:2',
+        'discount' => 'decimal:2',
     ];
 
-    public function customer()
+    public function customer(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'customer_id');
+        return $this->belongsTo(Customer::class, 'customer_id');
     }
 
-    public function service()
+    public function service(): BelongsTo
     {
         return $this->belongsTo(Service::class, 'service_id');
     }
