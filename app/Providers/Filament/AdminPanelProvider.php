@@ -31,7 +31,78 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->colors([
                 'primary' => Color::Amber,
+                'pink'    => Color::Pink,
+                'cream'   => Color::Rose,
+                'gray'    => Color::Stone, 
             ])
+            ->brandName('Kashoes')
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::HEAD_END,
+                fn (): string => \Illuminate\Support\Facades\Blade::render('
+                    <style>
+                        /* --- 1. BACKGROUND --- */
+                        /* Background utama (Cream) */
+                        body, .fi-layout, .fi-main {
+                            background-color: #ffffffff !important;
+                        }
+                        .dark body, .dark .fi-layout, .dark .fi-main {
+                            background-color: #ffffffff !important;
+                        }
+                        
+                        /* Kotak Tabel dan Card (Pink) */
+                        .fi-ta-ctn, .fi-section, .fi-card, .fi-modal-window {
+                            background-color: #b84c65 !important; 
+                        }
+                        .dark .fi-ta-ctn, .dark .fi-section, .dark .fi-card, .dark .fi-modal-window {
+                            background-color: #b84c65 !important;
+                        }
+                        
+                        /* Header tabel dan baris tembus pandang menyatu dengan pink */
+                        .fi-ta-header, .fi-ta-content, .fi-ta-table, .fi-ta-record {
+                            background-color: transparent !important;
+                        }
+
+                        /* --- 2. WARNA TEKS --- */
+                        /* Teks di area Cream menjadi Pink Tua (agar terlihat jelas dan kontras) */
+                        body, h1, h2, h3, h4, p, span, a, div, button, svg {
+                            color: #000000ff !important; /* Warna Deep Pink */
+                        }
+
+                        /* Teks di area Pink (dalam Tabel/Card) menjadi Cream */
+                        .fi-ta-ctn, .fi-section, .fi-card, .fi-modal-window,
+                        .fi-ta-ctn *, .fi-section *, .fi-card *, .fi-modal-window * {
+                            color: #000000ff !important; /* Warna Cream */
+                        }
+
+                        /* Pengecualian: Tombol utama "New Service" agar teksnya tetap putih/terbaca */
+                        .fi-btn-color-primary, .fi-btn-color-primary * {
+                            color: #ffffff !important;
+                        }
+
+                        /* --- 3. INPUT, SEARCH & CHECKBOX --- */
+                        /* Terapkan border dan warna hanya pada pembungkus utama (wrapper) agar ikon ikut masuk ke dalam kotak */
+                        .fi-input-wrapper, 
+                        input[type="checkbox"], select {
+                            border: 1.5px solid #000000ff !important; 
+                            background-color: #ffffffff !important; 
+                            box-shadow: none !important;
+                        }
+                        
+                        /* Pastikan elemen input di dalam wrapper tetap transparan agar menyatu dengan ikon */
+                        .fi-input-wrapper input {
+                            background-color: transparent !important;
+                            border: none !important;
+                        }
+                        
+                        /* Khusus mode gelap */
+                        .dark .fi-input-wrapper, 
+                        .dark input[type="checkbox"], .dark select {
+                            border: 1.5px solid #000000ff !important; 
+                            background-color: #ffffffff !important;
+                        }
+                    </style>
+                ')
+            )
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
