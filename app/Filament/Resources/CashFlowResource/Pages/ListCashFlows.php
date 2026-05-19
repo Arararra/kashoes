@@ -6,6 +6,8 @@ use App\Filament\Resources\CashFlowResource;
 use App\Filament\Resources\CashFlowResource\Widgets\CashFlowStats;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 
 class ListCashFlows extends ListRecords
 {
@@ -23,5 +25,20 @@ class ListCashFlows extends ListRecords
         return [
             CashFlowStats::class,
         ];
+    }
+
+    protected function getTableQuery(): Builder
+    {
+        $query = parent::getTableQuery();
+
+        $ids = request()->query('anomaly_ids');
+        if (! empty($ids)) {
+            $idsArray = array_filter(array_map('trim', explode(',', $ids)));
+            if (! empty($idsArray)) {
+                $query = $query->whereIn('id', $idsArray);
+            }
+        }
+
+        return $query;
     }
 }
