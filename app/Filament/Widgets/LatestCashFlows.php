@@ -2,28 +2,47 @@
 
 namespace App\Filament\Widgets;
 
+use App\Models\CashFlow;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Widgets\TableWidget as BaseWidget;
-use App\Models\CashFlow;
 
 class LatestCashFlows extends BaseWidget
 {
-    public ?int $span = null;
+    protected static ?string $heading = 'Arus Kas Terbaru';
 
-    public function getColumnSpan(): int|string|array
-    {
-        return $this->span ?? 'full';
-    }
+    protected static ?int $sort = 6;
+
+    protected int|string|array $columnSpan = 'full';
 
     public function table(Table $table): Table
     {
         return $table
-            ->query(CashFlow::latest()->take(5))
+            ->query(CashFlow::latest()->limit(8))
             ->columns([
-                Tables\Columns\TextColumn::make('date')->label('Date'),
-                Tables\Columns\TextColumn::make('type')->label('Type'),
-                Tables\Columns\TextColumn::make('amount')->label('Amount')->money('USD'),
-            ]);
+                TextColumn::make('date')
+                    ->label('Tanggal')
+                    ->date('d M Y')
+                    ->sortable(),
+
+                TextColumn::make('title')
+                    ->label('Keterangan')
+                    ->limit(40),
+
+                TextColumn::make('type')
+                    ->label('Tipe')
+                    ->badge()
+                    ->formatStateUsing(fn ($state) => $state === 'income' ? 'Pemasukan' : 'Pengeluaran')
+                    ->color(fn ($state) => $state === 'income' ? 'success' : 'danger'),
+
+                TextColumn::make('amount')
+                    ->label('Jumlah')
+                    ->formatStateUsing(fn ($state) => 'Rp ' . number_format($state, 0, ',', '.'))
+                    ->color(fn ($record) => $record->type === 'income' ? 'success' : 'danger')
+                    ->alignRight()
+                    ->weight('bold'),
+            ])
+            ->paginated(false);
     }
 }

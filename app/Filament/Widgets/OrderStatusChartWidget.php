@@ -27,7 +27,7 @@ class OrderStatusChartWidget extends ChartWidget
         ];
 
         $colors = [
-            'pending'          => '#6366f1',
+            'pending'          => '#b84c65',
             'in_progress'      => '#f59e0b',
             'ready_for_pickup' => '#06b6d4',
             'completed'        => '#22c55e',

@@ -8,6 +8,10 @@ use Carbon\Carbon;
 
 class RevenueWidget extends Widget
 {
+    protected static bool $isLazy = false;
+
+    public static function canView(): bool { return false; }
+
     protected static string $view = 'filament.widgets.revenue-widget';
 
     protected function getViewData(): array

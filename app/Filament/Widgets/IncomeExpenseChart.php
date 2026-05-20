@@ -3,51 +3,58 @@
 namespace App\Filament\Widgets;
 
 use Filament\Widgets\ChartWidget;
-use Illuminate\Support\Facades\DB;
+use App\Models\CashFlow;
+use Carbon\Carbon;
 
 class IncomeExpenseChart extends ChartWidget
 {
-    protected static ?string $heading = 'Chart';
-    
-    public ?int $span = null;
+    protected static ?string $heading = 'Pemasukan vs Pengeluaran (Tahun Ini)';
 
-    public function getColumnSpan(): int|string|array
-    {
-        return $this->span ?? 'full';
-    }
+    protected static ?int $sort = 7;
+
+    protected int|string|array $columnSpan = 'full';
 
     protected function getData(): array
     {
-        $income = DB::table('cash_flows')
-            ->selectRaw('MONTH(date) as month, SUM(amount) as total')
-            ->where('type', 'income')
-            ->whereYear('date', now()->year)
-            ->groupByRaw('MONTH(date)')
-            ->pluck('total', 'month')
-            ->toArray();
+        $months = [];
+        $income  = [];
+        $expense = [];
 
-        $expenses = DB::table('cash_flows')
-            ->selectRaw('MONTH(date) as month, SUM(amount) as total')
-            ->where('type', 'expense')
-            ->whereYear('date', now()->year)
-            ->groupByRaw('MONTH(date)')
-            ->pluck('total', 'month')
-            ->toArray();
+        for ($i = 11; $i >= 0; $i--) {
+            $date = Carbon::now()->subMonths($i);
+            $months[] = $date->translatedFormat('M');
+
+            $income[] = (float) CashFlow::where('type', 'income')
+                ->whereYear('date', $date->year)
+                ->whereMonth('date', $date->month)
+                ->sum('amount');
+
+            $expense[] = (float) CashFlow::where('type', 'expense')
+                ->whereYear('date', $date->year)
+                ->whereMonth('date', $date->month)
+                ->sum('amount');
+        }
 
         return [
-            'labels' => array_keys($income),
+            'labels'   => $months,
             'datasets' => [
                 [
-                    'label' => 'Income',
-                    'data' => array_values($income),
-                    'backgroundColor' => 'rgba(75, 192, 192, 0.2)',
-                    'borderColor' => 'rgba(75, 192, 192, 1)',
+                    'label'           => 'Pemasukan',
+                    'data'            => $income,
+                    'backgroundColor' => 'rgba(74, 140, 111, 0.18)',   /* --ks-success */
+                    'borderColor'     => '#4a8c6f',
+                    'borderWidth'     => 2,
+                    'borderRadius'    => 6,
+                    'pointRadius'     => 3,
                 ],
                 [
-                    'label' => 'Expenses',
-                    'data' => array_values($expenses),
-                    'backgroundColor' => 'rgba(255, 99, 132, 0.2)',
-                    'borderColor' => 'rgba(255, 99, 132, 1)',
+                    'label'           => 'Pengeluaran',
+                    'data'            => $expense,
+                    'backgroundColor' => 'rgba(184, 76, 101, 0.18)',   /* --ks-primary */
+                    'borderColor'     => '#b84c65',
+                    'borderWidth'     => 2,
+                    'borderRadius'    => 6,
+                    'pointRadius'     => 3,
                 ],
             ],
         ];
@@ -56,5 +63,33 @@ class IncomeExpenseChart extends ChartWidget
     protected function getType(): string
     {
         return 'bar';
+    }
+
+    protected function getOptions(): array
+    {
+        return [
+            'plugins' => [
+                'legend' => ['position' => 'top', 'labels' => ['usePointStyle' => true]],
+                'tooltip' => [
+                    'callbacks' => [
+                        'label' => 'function(ctx){ return " Rp " + new Intl.NumberFormat("id-ID").format(ctx.raw); }',
+                    ],
+                ],
+            ],
+            'scales' => [
+                'y' => [
+                    'beginAtZero' => true,
+                    'grid'  => ['color' => 'rgba(226,216,210,0.5)'],
+                    'ticks' => [
+                        'color'    => '#a08888',
+                        'callback' => 'function(v){ return "Rp " + new Intl.NumberFormat("id-ID").format(v); }',
+                    ],
+                ],
+                'x' => [
+                    'grid'  => ['display' => false],
+                    'ticks' => ['color' => '#6b5050'],
+                ],
+            ],
+        ];
     }
 }
