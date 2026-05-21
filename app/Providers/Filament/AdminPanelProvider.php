@@ -13,6 +13,7 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\View\PanelsRenderHook;
+use Illuminate\Support\HtmlString;
 use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -43,7 +44,7 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::SIDEBAR_NAV_START,
                 fn () => Blade::render('
-                    <div style="padding:12px 16px 10px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,0.15);margin-bottom:6px;">
+                    <div style="padding:12px 16px 10px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,0.15);margin-bottom:10px;">
                         <div style="width:42px;height:42px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.18);">
                             <img src="/images/KaShoes.png" style="width:100%;height:100%;object-fit:cover;" alt="KaShoes">
                         </div>
@@ -59,440 +60,205 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::HEAD_END,
                 fn () => Blade::render('
                     <style>
-                    /* ══════════════════════════════════════════════════════
-                       KASHOES DESIGN TOKENS
-                    ══════════════════════════════════════════════════════ */
                     :root {
-                        /* Primary */
                         --ks-primary:        #b84c65;
-                        --ks-primary-light:  #d4768a;
-                        --ks-primary-dark:   #8c3349;
-                        --ks-primary-muted:  #f5e6ea;
-
-                        /* Base – Light Mode */
                         --ks-bg:             #faf6f3;
                         --ks-surface:        #ffffff;
-                        --ks-surface-alt:    #f0ebe6;
                         --ks-border:         #e2d8d2;
                         --ks-text:           #1e1414;
                         --ks-text-secondary: #6b5050;
-                        --ks-text-muted:     #a08888;
-
-                        /* Semantic */
-                        --ks-success:        #4a8c6f;
-                        --ks-success-bg:     #e6f4ee;
-                        --ks-warning:        #c4813a;
-                        --ks-warning-bg:     #fef3e2;
-                        --ks-error:          #c0392b;
-                        --ks-error-bg:       #fde8e8;
-                        --ks-info:           #4a6e8c;
-                        --ks-info-bg:        #e6eff6;
-
-                        /* Spacing */
-                        --ks-space-1: 4px;  --ks-space-2: 8px;
-                        --ks-space-3: 12px; --ks-space-4: 16px;
-                        --ks-space-6: 24px; --ks-space-8: 32px;
-
-                        /* Radius */
-                        --ks-radius-sm:  4px;
-                        --ks-radius-md:  8px;
-                        --ks-radius-lg:  12px;
-                        --ks-radius-xl:  16px;
-                        --ks-radius-full: 9999px;
-
-                        /* Shadows */
+                        --ks-radius-md:      8px;
+                        --ks-radius-lg:      12px;
                         --ks-shadow-sm:      0 1px 3px rgba(30,20,20,.08);
-                        --ks-shadow-md:      0 4px 12px rgba(30,20,20,.10);
-                        --ks-shadow-lg:      0 8px 24px rgba(30,20,20,.12);
-                        --ks-shadow-brand:   0 4px 16px rgba(184,76,101,.22);
-
-                        /* Transitions */
-                        --ks-ease-fast:  150ms ease;
-                        --ks-ease-base:  250ms ease;
                     }
+
+                    body, html { background-color: var(--ks-bg) !important; }
+                    .fi-main, .fi-body { background-color: var(--ks-bg) !important; }
 
                     /* ══════════════════════════════════════════════════════
-                       GLOBAL LAYOUT
+                       SIDEBAR & TOPBAR 
                     ══════════════════════════════════════════════════════ */
-                    body, html {
-                        background-color: var(--ks-bg) !important;
-                    }
-                    .fi-main, .fi-body {
-                        background-color: var(--ks-bg) !important;
+                    .fi-sidebar, .fi-sidebar-nav, aside.fi-sidebar {
+                        background: var(--ks-primary) !important; 
+                        border-right: none !important;
                     }
 
-                    /* ══════════════════════════════════════════════════════
-                       SIDEBAR
-                    ══════════════════════════════════════════════════════ */
-                    .fi-sidebar,
-                    .fi-sidebar-nav,
-                    aside.fi-sidebar {
-                        background: linear-gradient(175deg, var(--ks-primary) 0%, var(--ks-primary-dark) 100%) !important;
-                    }
-                    /* ── Semua item sidebar: force putih ── */
-                    .fi-sidebar-item-button,
-                    .fi-sidebar-item-button span,
-                    .fi-sidebar-item-button span span {
-                        color: rgba(255,255,255,0.90) !important;
-                        border-radius: var(--ks-radius-md) !important;
-                        transition: background var(--ks-ease-fast), color var(--ks-ease-fast) !important;
-                        font-weight: 500 !important;
-                    }
+                    .fi-topbar .fi-logo, .fi-topbar-start, .fi-sidebar-header { display: none !important; }
 
-                    /* ── Semua SVG/icon di sidebar: force putih ── */
-                    .fi-sidebar svg,
-                    .fi-sidebar-item-button svg,
-                    .fi-sidebar-item-button * svg,
-                    .fi-sidebar-item-icon svg {
-                        color: rgba(255,255,255,0.88) !important;
-                        stroke: rgba(255,255,255,0.88) !important;
-                        fill: none !important;
-                        opacity: 1 !important;
-                    }
-
-                    /* ── Hover ── */
-                    .fi-sidebar-item-button:hover,
-                    .fi-sidebar-item-button:hover span {
-                        background: rgba(255,255,255,0.15) !important;
-                        color: #fff !important;
-                    }
-                    .fi-sidebar-item-button:hover svg,
-                    .fi-sidebar-item-button:hover * svg {
-                        color: #fff !important;
-                        stroke: #fff !important;
-                    }
-
-                    /* ── AKTIF: override total semua default Filament ── */
-                    .fi-sidebar-item-button[aria-current="page"],
-                    .fi-sidebar-item-button.fi-active {
-                        background: rgba(255,255,255,0.20) !important;
-                        box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.30) !important;
-                    }
-                    /* Semua child element item aktif: paksa putih */
-                    .fi-sidebar-item-button[aria-current="page"],
-                    .fi-sidebar-item-button[aria-current="page"] *,
-                    .fi-sidebar-item-button.fi-active,
-                    .fi-sidebar-item-button.fi-active * {
-                        color: #ffffff !important;
-                        stroke: #ffffff !important;
-                        font-weight: 700 !important;
-                    }
-                    /* SVG aktif spesifik */
-                    .fi-sidebar-item-button[aria-current="page"] svg,
-                    .fi-sidebar-item-button.fi-active svg {
-                        color: #ffffff !important;
-                        stroke: #ffffff !important;
-                        fill: none !important;
-                        opacity: 1 !important;
-                    }
-
-                    /* ── Badge ── */
-                    .fi-sidebar-item-badge,
-                    .fi-sidebar-item-badge * {
-                        background: rgba(255,255,255,0.25) !important;
-                        color: #fff !important;
-                        font-weight: 600 !important;
-                    }
-
-                    /* ── Group label ── */
-                    .fi-sidebar-group-label {
-                        color: rgba(255,255,255,0.50) !important;
-                        font-size: 0.6rem !important;
-                        letter-spacing: .12em !important;
-                        text-transform: uppercase !important;
-                        font-weight: 700 !important;
-                    }
-
-                    /* ── Scrollbar ── */
-                    .fi-sidebar ::-webkit-scrollbar { width: 3px; }
-                    .fi-sidebar ::-webkit-scrollbar-thumb {
-                        background: rgba(255,255,255,.25);
-                        border-radius: var(--ks-radius-sm);
-                    }
-
-                    /* Hide brand logo in topbar (pojok kiri atas) + hapus sisa ruang putih */
-                    .fi-topbar .fi-logo,
-                    .fi-topbar-item:has(.fi-logo),
-                    .fi-logo { display: none !important; }
-
-                    /* Container kiri topbar (di atas sidebar) — paksa warna sama */
-                    .fi-topbar nav > div:first-child,
-                    .fi-topbar > nav > div:first-child,
-                    .fi-topbar-start,
-                    .fi-sidebar-header,
-                    [data-tippy-content] .fi-logo { display: none !important; }
-
-                    /* Pastikan SELURUH topbar bar — termasuk bagian kiri atas sidebar — berwarna brand */
-                    .fi-topbar { background-color: var(--ks-primary) !important; }
-                    .fi-topbar nav { background-color: var(--ks-primary) !important; }
-                    .fi-topbar nav > * { background-color: transparent !important; }
-
-                    /* ══════════════════════════════════════════════════════
-                       TOPBAR / HEADER
-                    ══════════════════════════════════════════════════════ */
-                    .fi-topbar,
-                    header.fi-topbar,
-                    .fi-topbar nav {
+                    .fi-topbar, header.fi-topbar, .fi-topbar nav, .fi-topbar nav > * {
                         background-color: var(--ks-primary) !important;
+                        background-image: none !important;
                         border-bottom: none !important;
-                        box-shadow: var(--ks-shadow-brand) !important;
-                    }
-                    .fi-topbar button,
-                    .fi-topbar a,
-                    .fi-topbar svg {
-                        color: rgba(255,255,255,0.88) !important;
-                    }
-                    .fi-topbar button:hover svg,
-                    .fi-topbar a:hover svg {
-                        color: #fff !important;
-                    }
-                    .fi-breadcrumbs ol li span,
-                    .fi-breadcrumbs ol li a {
-                        color: rgba(255,255,255,0.72) !important;
-                    }
-                    .fi-breadcrumbs ol li:last-child span {
-                        color: #fff !important;
-                        font-weight: 600 !important;
-                    }
-                    .fi-breadcrumbs ol li svg {
-                        color: rgba(255,255,255,0.38) !important;
+                        box-shadow: none !important;
                     }
 
                     /* ══════════════════════════════════════════════════════
-                       PAGE HEADING
+                       EFEK INTERAKTIF SIDEBAR (WARNA-WARNI ELEGANT)
                     ══════════════════════════════════════════════════════ */
-                    .fi-header-heading {
+                    
+                    /* ── MENU INACTIVE (Pengaturan Dasar Floating Pills) ── */
+                    .fi-sidebar-item-button {
+                        border-radius: var(--ks-radius-md) !important;
+                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                        font-weight: 500 !important;
+                        margin: 0 10px 6px 10px !important; 
+                        border: none !important;
+                        border-left: 3px solid transparent !important;
+                    }
+
+                    .fi-sidebar-item-button span {
+                        color: rgba(255, 255, 255, 0.85) !important;
+                        transition: all 0.3s ease !important;
+                    }
+
+                    .fi-sidebar svg, .fi-sidebar-item-button svg {
+                        transition: all 0.3s ease !important;
+                    }
+
+                    /* ── WARNA-WARNI TRANSPARAN UNTUK SEMUA MENU ── */
+                    
+                    a.fi-sidebar-item-button[href*="dashboard"]:not(.fi-active), a.fi-sidebar-item-button[href$="/admin"]:not(.fi-active) { background-color: rgba(99, 102, 241, 0.12) !important; border-left-color: #6366f1 !important; }
+                    a.fi-sidebar-item-button[href*="dashboard"]:not(.fi-active) svg, a.fi-sidebar-item-button[href$="/admin"]:not(.fi-active) svg { color: #818cf8 !important; stroke: #818cf8 !important; }
+
+                    a.fi-sidebar-item-button[href*="services"]:not(.fi-active) { background-color: rgba(251, 191, 36, 0.12) !important; border-left-color: #fbbf24 !important; }
+                    a.fi-sidebar-item-button[href*="services"]:not(.fi-active) svg { color: #fcd34d !important; stroke: #fcd34d !important; }
+
+                    a.fi-sidebar-item-button[href*="produk"]:not(.fi-active), a.fi-sidebar-item-button[href*="products"]:not(.fi-active) { background-color: rgba(56, 189, 248, 0.12) !important; border-left-color: #38bdf8 !important; }
+                    a.fi-sidebar-item-button[href*="produk"]:not(.fi-active) svg, a.fi-sidebar-item-button[href*="products"]:not(.fi-active) svg { color: #7dd3fc !important; stroke: #7dd3fc !important; }
+
+                    a.fi-sidebar-item-button[href*="customers"]:not(.fi-active), a.fi-sidebar-item-button[href*="pelanggan"]:not(.fi-active) { background-color: rgba(45, 212, 191, 0.12) !important; border-left-color: #2dd4bf !important; }
+                    a.fi-sidebar-item-button[href*="customers"]:not(.fi-active) svg, a.fi-sidebar-item-button[href*="pelanggan"]:not(.fi-active) svg { color: #5eead4 !important; stroke: #5eead4 !important; }
+
+                    a.fi-sidebar-item-button[href*="orders"]:not(.fi-active), a.fi-sidebar-item-button[href*="pesanan"]:not(.fi-active) { background-color: rgba(34, 197, 94, 0.12) !important; border-left-color: #22c55e !important; }
+                    a.fi-sidebar-item-button[href*="orders"]:not(.fi-active) svg, a.fi-sidebar-item-button[href*="pesanan"]:not(.fi-active) svg { color: #86efac !important; stroke: #86efac !important; }
+
+                    a.fi-sidebar-item-button[href*="reports"]:not(.fi-active), a.fi-sidebar-item-button[href*="report"]:not(.fi-active), a.fi-sidebar-item-button[href*="laporan"]:not(.fi-active) { background-color: rgba(168, 85, 247, 0.12) !important; border-left-color: #a855f7 !important; }
+                    a.fi-sidebar-item-button[href*="reports"]:not(.fi-active) svg, a.fi-sidebar-item-button[href*="report"]:not(.fi-active) svg, a.fi-sidebar-item-button[href*="laporan"]:not(.fi-active) svg { color: #d8b4fe !important; stroke: #d8b4fe !important; }
+
+                    a.fi-sidebar-item-button[href*="users"]:not(.fi-active), a.fi-sidebar-item-button[href*="pengguna"]:not(.fi-active) { background-color: rgba(249, 115, 22, 0.12) !important; border-left-color: #f97316 !important; }
+                    a.fi-sidebar-item-button[href*="users"]:not(.fi-active) svg, a.fi-sidebar-item-button[href*="pengguna"]:not(.fi-active) svg { color: #fdba74 !important; stroke: #fdba74 !important; }
+
+                    a.fi-sidebar-item-button[href*="roles"]:not(.fi-active), a.fi-sidebar-item-button[href*="peran"]:not(.fi-active) { background-color: rgba(244, 63, 94, 0.12) !important; border-left-color: #f43f5e !important; }
+                    a.fi-sidebar-item-button[href*="roles"]:not(.fi-active) svg, a.fi-sidebar-item-button[href*="peran"]:not(.fi-active) svg { color: #fda4af !important; stroke: #fda4af !important; }
+
+                    a.fi-sidebar-item-button:not(.fi-active):not([href*="dashboard"]):not([href$="/admin"]):not([href*="services"]):not([href*="produk"]):not([href*="products"]):not([href*="customers"]):not([href*="pelanggan"]):not([href*="orders"]):not([href*="pesanan"]):not([href*="reports"]):not([href*="report"]):not([href*="laporan"]):not([href*="users"]):not([href*="pengguna"]):not([href*="roles"]):not([href*="peran"]) {
+                        background-color: rgba(255, 255, 255, 0.05) !important;
+                        border-left-color: rgba(255, 255, 255, 0.15) !important;
+                    }
+                    a.fi-sidebar-item-button:not(.fi-active):not([href*="dashboard"]):not([href$="/admin"]):not([href*="services"]):not([href*="produk"]):not([href*="products"]):not([href*="customers"]):not([href*="pelanggan"]):not([href*="orders"]):not([href*="pesanan"]):not([href*="reports"]):not([href*="report"]):not([href*="laporan"]):not([href*="users"]):not([href*="pengguna"]):not([href*="roles"]):not([href*="peran"]) svg {
+                        color: rgba(255,255,255,0.7) !important; stroke: rgba(255,255,255,0.7) !important;
+                    }
+
+                    /* ── EFEK HOVER (Menyala & Menggeser) ── */
+                    .fi-sidebar-item-button:hover:not(.fi-active) {
+                        filter: brightness(1.25) !important; 
+                        box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
+                    }
+                    
+                    .fi-sidebar-item-button:hover span, .fi-sidebar-item-button:hover svg {
+                        transform: translateX(4px) !important;
+                        color: #ffffff !important;
+                    }
+
+                    /* ── EFEK AKTIF (Kotak Terang Putih, Teks Marun) ── */
+                    .fi-sidebar-item-button[aria-current="page"], .fi-sidebar-item-button.fi-active {
+                        background: #f3f4f6 !important;
+                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+                        border-left: 4px solid var(--ks-primary) !important;
+                    }
+
+                    .fi-sidebar-item-button[aria-current="page"] span, .fi-sidebar-item-button.fi-active span {
                         color: var(--ks-primary) !important;
                         font-weight: 700 !important;
-                    }
-                    .fi-header-subheading {
-                        color: var(--ks-text-secondary) !important;
+                        transform: translateX(4px) !important;
                     }
 
+                    .fi-sidebar-item-button[aria-current="page"] svg, .fi-sidebar-item-button.fi-active svg {
+                        color: var(--ks-primary) !important;
+                        stroke: var(--ks-primary) !important;
+                    }
+
+                    /* ── FIX ABSOLUT UNTUK BADGE ANGKA (MENJEBOL TAILWIND) ── */
+                    /* Memaksa kotak menjadi putih dan warna teks di dalamnya menjadi marun */
+                    .fi-sidebar-item-button .fi-badge,
+                    .fi-sidebar-item-badge,
+                    div[class*="badge"], span[class*="badge"] {
+                        background-color: #ffffff !important;
+                        color: #b84c65 !important;
+                        /* Meretas variabel bawaan Tailwind dari Filament */
+                        --c-50: #b84c65 !important;
+                        --c-400: #b84c65 !important;
+                        --c-500: #b84c65 !important;
+                        --c-600: #b84c65 !important;
+                        font-weight: 900 !important;
+                    }
+                    
+                    .fi-sidebar-item-button .fi-badge *,
+                    .fi-sidebar-item-badge * {
+                        color: #b84c65 !important;
+                    }
+
+                    /* Membalik warna badge saat menu sedang aktif */
+                    .fi-sidebar-item-button[aria-current="page"] .fi-badge,
+                    .fi-sidebar-item-button[aria-current="page"] .fi-sidebar-item-badge,
+                    .fi-active .fi-badge,
+                    .fi-active .fi-sidebar-item-badge {
+                        background-color: #b84c65 !important;
+                        color: #ffffff !important;
+                        --c-400: #ffffff !important;
+                        --c-500: #ffffff !important;
+                        --c-600: #ffffff !important;
+                    }
+                    
+                    .fi-sidebar-item-button[aria-current="page"] .fi-badge *,
+                    .fi-sidebar-item-button[aria-current="page"] .fi-sidebar-item-badge *,
+                    .fi-active .fi-badge *,
+                    .fi-active .fi-sidebar-item-badge * {
+                        color: #ffffff !important;
+                    }
+
+                    /* ── LABEL GRUP (DENGAN GARIS ESTETIK) ── */
+                    .fi-sidebar-group-label {
+                        color: rgba(255,255,255,0.60) !important;
+                        font-size: 0.65rem !important;
+                        letter-spacing: .15em !important;
+                        text-transform: uppercase !important;
+                        font-weight: 700 !important;
+                        display: flex !important;
+                        align-items: center !important;
+                        gap: 10px !important;
+                        margin-top: 10px !important;
+                    }
+                    
+                    .fi-sidebar-group-label::after {
+                        content: "";
+                        flex: 1;
+                        height: 1px;
+                        background: linear-gradient(90deg, rgba(255,255,255,0.2) 0%, transparent 100%);
+                    }
+
+                    /* ── TOPBAR ICON & BREADCRUMB ── */
+                    .fi-topbar button, .fi-topbar a, .fi-topbar svg, .fi-topbar span { color: #ffffff !important; }
+                    .fi-breadcrumbs ol li span, .fi-breadcrumbs ol li a { color: rgba(255,255,255,0.85) !important; }
+                    .fi-breadcrumbs ol li:last-child span { color: #ffffff !important; font-weight: 700 !important; }
+
                     /* ══════════════════════════════════════════════════════
-                       CARDS / SECTIONS (fi-section)
+                       CARDS & WIDGETS
                     ══════════════════════════════════════════════════════ */
-                    .fi-section {
+                    .fi-header-heading { color: var(--ks-primary) !important; font-weight: 700 !important; }
+                    .fi-section, .fi-wi-stats-overview-stat {
                         background-color: var(--ks-surface) !important;
                         border: 1px solid var(--ks-border) !important;
                         border-radius: var(--ks-radius-lg) !important;
                         box-shadow: var(--ks-shadow-sm) !important;
-                        transition: box-shadow var(--ks-ease-fast) !important;
                     }
-                    .fi-section:hover {
-                        box-shadow: var(--ks-shadow-md) !important;
-                    }
-                    .fi-section-header-heading {
-                        color: var(--ks-primary) !important;
-                        font-weight: 700 !important;
-                    }
-                    .fi-section-header {
-                        border-bottom: 1px solid var(--ks-border) !important;
-                    }
-
-                    /* ══════════════════════════════════════════════════════
-                       STAT OVERVIEW WIDGET
-                    ══════════════════════════════════════════════════════ */
-                    .fi-wi-stats-overview-stat {
-                        background: var(--ks-surface) !important;
-                        border: 1px solid var(--ks-border) !important;
-                        border-radius: var(--ks-radius-lg) !important;
-                        box-shadow: var(--ks-shadow-sm) !important;
-                        transition: transform var(--ks-ease-fast), box-shadow var(--ks-ease-fast) !important;
-                    }
-                    .fi-wi-stats-overview-stat:hover {
-                        transform: translateY(-2px) !important;
-                        box-shadow: var(--ks-shadow-brand) !important;
-                    }
-                    .fi-wi-stats-overview-stat-label {
-                        color: var(--ks-text-secondary) !important;
-                        font-size: 0.8rem !important;
-                    }
-                    .fi-wi-stats-overview-stat-value {
-                        color: var(--ks-text) !important;
-                        font-weight: 700 !important;
-                    }
-                    .fi-wi-stats-overview-stat-description {
-                        color: var(--ks-text-muted) !important;
-                        font-size: 0.75rem !important;
-                    }
-
-                    /* ══════════════════════════════════════════════════════
-                       TABLE WIDGET
-                    ══════════════════════════════════════════════════════ */
-                    .fi-ta-header-cell {
-                        color: var(--ks-text-secondary) !important;
-                        font-size: 0.78rem !important;
-                        font-weight: 600 !important;
-                        text-transform: uppercase !important;
-                        letter-spacing: .05em !important;
-                    }
-                    .fi-ta-cell {
-                        color: var(--ks-text) !important;
-                    }
-                    .fi-ta-row:hover td {
-                        background: var(--ks-primary-muted) !important;
-                    }
-
-                    /* ══════════════════════════════════════════════════════
-                       BUTTONS
-                    ══════════════════════════════════════════════════════ */
-                    .fi-btn-color-primary.fi-btn {
-                        background-color: var(--ks-primary) !important;
-                        border-color: var(--ks-primary) !important;
-                        border-radius: var(--ks-radius-md) !important;
-                        transition: background var(--ks-ease-fast), box-shadow var(--ks-ease-fast) !important;
-                    }
-                    .fi-btn-color-primary.fi-btn:hover {
-                        background-color: var(--ks-primary-light) !important;
-                        border-color: var(--ks-primary-light) !important;
-                        box-shadow: var(--ks-shadow-brand) !important;
-                    }
-
-                    /* ══════════════════════════════════════════════════════
-                       FORM INPUTS
-                    ══════════════════════════════════════════════════════ */
-                    .fi-input {
-                        border-color: var(--ks-border) !important;
-                        background: var(--ks-bg) !important;
-                        border-radius: var(--ks-radius-md) !important;
-                        color: var(--ks-text) !important;
-                    }
-                    .fi-input:focus, .fi-input:focus-within {
-                        border-color: var(--ks-primary) !important;
-                        outline: 2px solid rgba(184,76,101,0.2) !important;
-                    }
-                    .fi-select-input {
-                        border-color: var(--ks-border) !important;
-                        border-radius: var(--ks-radius-md) !important;
-                    }
-
-                    /* ══════════════════════════════════════════════════════
-                       BADGES
-                    ══════════════════════════════════════════════════════ */
-                    .fi-badge-color-primary {
-                        background: var(--ks-primary-muted) !important;
-                        color: var(--ks-primary-dark) !important;
-                        border-radius: var(--ks-radius-full) !important;
-                    }
-
-                    /* ══════════════════════════════════════════════════════
-                       REPORT PAGE — SUMMARY CARDS (via token override)
-                    ══════════════════════════════════════════════════════ */
-                    .ks-card-income  { background: var(--ks-success-bg) !important; }
-                    .ks-card-expense { background: var(--ks-error-bg) !important; }
-                    .ks-card-balance { background: var(--ks-primary-muted) !important; }
-
-                    .ks-card-income  .ks-card-label  { color: var(--ks-success) !important; }
-                    .ks-card-income  .ks-card-value  { color: var(--ks-success) !important; }
-                    .ks-card-expense .ks-card-label  { color: var(--ks-error) !important; }
-                    .ks-card-expense .ks-card-value  { color: var(--ks-error) !important; }
-                    .ks-card-balance .ks-card-label  { color: var(--ks-primary-dark) !important; }
-                    .ks-card-balance .ks-card-value  { color: var(--ks-primary) !important; }
-
-                    .ks-card-value-minus { color: var(--ks-error) !important; }
-
-                    /* ══════════════════════════════════════════════════════
-                       REPORT PAGE — TABLES
-                    ══════════════════════════════════════════════════════ */
-                    .ks-badge-income {
-                        background: var(--ks-success-bg) !important;
-                        color: var(--ks-success) !important;
-                        border-radius: var(--ks-radius-full) !important;
-                        padding: 2px 8px !important;
-                        font-size: 0.72rem !important;
-                        font-weight: 600 !important;
-                    }
-                    .ks-badge-expense {
-                        background: var(--ks-error-bg) !important;
-                        color: var(--ks-error) !important;
-                        border-radius: var(--ks-radius-full) !important;
-                        padding: 2px 8px !important;
-                        font-size: 0.72rem !important;
-                        font-weight: 600 !important;
-                    }
-                    .ks-text-income  { color: var(--ks-success) !important; }
-                    .ks-text-expense { color: var(--ks-error) !important; }
-
-                    /* Dividers */
-                    .ks-divider { border-color: var(--ks-border) !important; }
-
-                    /* ══════════════════════════════════════════════════════
-                       REPORT FILTER SELECTS
-                    ══════════════════════════════════════════════════════ */
-                    .ks-filter-select {
-                        border: 1px solid var(--ks-border) !important;
-                        border-radius: var(--ks-radius-md) !important;
-                        background: var(--ks-bg) !important;
-                        color: var(--ks-text) !important;
-                        font-size: 0.875rem !important;
-                        padding: 6px 12px !important;
-                        transition: border-color var(--ks-ease-fast) !important;
-                    }
-                    .ks-filter-select:focus {
-                        outline: 2px solid rgba(184,76,101,0.25) !important;
-                        border-color: var(--ks-primary) !important;
-                    }
-                    .ks-filter-label {
-                        font-size: 0.875rem !important;
-                        font-weight: 600 !important;
-                        color: var(--ks-text-secondary) !important;
-                    }
-
-                    /* ══════════════════════════════════════════════════════
-                       ACCOUNT WIDGET (Welcome card)
-                    ══════════════════════════════════════════════════════ */
-                    .fi-wi-account {
-                        border: 1px solid var(--ks-border) !important;
-                        background: var(--ks-surface) !important;
-                        border-radius: var(--ks-radius-lg) !important;
-                    }
-                    </style>
-                '),
-            )
-            // ── Sidebar override — load LAST (after Filament CSS) ──────
-            ->renderHook(
-                PanelsRenderHook::BODY_END,
-                fn () => Blade::render('
-                    <style id="ks-sidebar-override">
-
-                    /* ── Non-active: text & icon putih ── */
-                    .fi-sidebar-item-button {
-                        color: rgba(255,255,255,0.90) !important;
-                    }
-                    .fi-sidebar-item-button span {
-                        color: rgba(255,255,255,0.90) !important;
-                    }
-
-                    /* ── AKTIF: background cream, text pakai warna gelap (bawaan Filament) ── */
-                    .fi-sidebar-item-button[aria-current="page"],
-                    .fi-sidebar-item-button.fi-active {
-                        background-color: #fdf0f3 !important;
-                        border-radius: 8px !important;
-                        box-shadow: none !important;
-                    }
-                    /* Teks aktif: warna brand */
-                    .fi-sidebar-item-button[aria-current="page"] span,
-                    .fi-sidebar-item-button.fi-active span {
-                        color: #b84c65 !important;
-                        font-weight: 700 !important;
-                    }
-
-                    /* ── Hover ── */
-                    .fi-sidebar-item-button:hover {
-                        background-color: rgba(255,255,255,0.15) !important;
-                    }
-
-                    /* ── Badge (Roles, dll) ── */
-                    .fi-sidebar-item-badge {
-                        background-color: #fdf0f3 !important;
-                        color: #b84c65 !important;
-                        font-weight: 700 !important;
-                        border-radius: 999px !important;
-                        min-width: 20px !important;
-                        text-align: center !important;
-                    }
-
+                    .fi-wi-stats-overview-stat-label { color: var(--ks-text-secondary) !important; font-size: 0.8rem !important; }
+                    .fi-wi-stats-overview-stat-value { color: var(--ks-text) !important; font-weight: 700 !important; }
+                    
+                    /* Buttons & Inputs */
+                    .fi-btn-color-primary.fi-btn { background-color: var(--ks-primary) !important; border-color: var(--ks-primary) !important; }
+                    .fi-input { border-color: var(--ks-border) !important; background: var(--ks-bg) !important; color: var(--ks-text) !important; }
+                    .fi-input:focus { border-color: var(--ks-primary) !important; outline: 2px solid rgba(184,76,101,0.2) !important; }
                     </style>
                 '),
             )
