@@ -1,0 +1,199 @@
+/* ================================================================
+   KaShoes Admin Theme — Complete Sidebar Redesign
+   Brand: #b84c65 | Dark sidebar with brand accent active state
+   ================================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* ── Root font ──────────────────────────────────────────────── */
+.fi-sidebar,
+.fi-topbar,
+.fi-main {
+    font-family: 'Inter', sans-serif !important;
+}
+
+/* ================================================================
+   SIDEBAR — Dark premium
+   ================================================================ */
+.fi-sidebar,
+.fi-sidebar-nav,
+aside.fi-sidebar {
+    background: #1e0a12 !important;
+    border-right: none !important;
+}
+
+/* ── Sidebar header area (logo) ─────────────────────────────── */
+.fi-sidebar-header {
+    background: #1e0a12 !important;
+    border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+}
+
+/* ── ALL text & icons in sidebar: white ─────────────────────── */
+.fi-sidebar-item-button {
+    color: rgba(255, 255, 255, 0.72) !important;
+    border-radius: 10px !important;
+    font-weight: 500 !important;
+    font-size: 0.875rem !important;
+    transition: all 0.18s ease !important;
+    margin-bottom: 2px !important;
+    padding: 0.55rem 0.75rem !important;
+    letter-spacing: 0.01em !important;
+}
+
+/* ── Hover ──────────────────────────────────────────────────── */
+.fi-sidebar-item-button:hover {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    color: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* ── ACTIVE: brand color background — brand merah sebagai highlight */
+.fi-sidebar-item-button[aria-current="page"],
+.fi-sidebar-item-button.fi-active {
+    background-color: #b84c65 !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 14px rgba(184, 76, 101, 0.45) !important;
+}
+
+.fi-sidebar-item-button[aria-current="page"]:hover,
+.fi-sidebar-item-button.fi-active:hover {
+    background-color: #c85975 !important;
+    color: #ffffff !important;
+}
+
+/* ── Group labels ────────────────────────────────────────────── */
+.fi-sidebar-group-label {
+    color: rgba(255, 255, 255, 0.30) !important;
+    font-size: 0.6rem !important;
+    letter-spacing: 0.14em !important;
+    text-transform: uppercase !important;
+    font-weight: 700 !important;
+    padding-top: 1rem !important;
+    padding-bottom: 0.25rem !important;
+}
+
+/* ── Badge (angka di nav item seperti Roles: 3) ─────────────── */
+.fi-sidebar-item-badge {
+    background-color: #b84c65 !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    border-radius: 999px !important;
+    font-size: 0.65rem !important;
+    min-width: 1.25rem !important;
+    text-align: center !important;
+    padding: 0.1rem 0.4rem !important;
+    line-height: 1.4 !important;
+}
+
+/* Badge pada item yang aktif: warna beda supaya tetap kontras */
+.fi-sidebar-item-button[aria-current="page"] .fi-sidebar-item-badge,
+.fi-sidebar-item-button.fi-active .fi-sidebar-item-badge {
+    background-color: rgba(255,255,255,0.25) !important;
+    color: #ffffff !important;
+}
+
+/* ── Sidebar scrollbar ──────────────────────────────────────── */
+.fi-sidebar ::-webkit-scrollbar { width: 4px; }
+.fi-sidebar ::-webkit-scrollbar-track { background: transparent; }
+.fi-sidebar ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 4px;
+}
+
+/* ── Group collapse button ──────────────────────────────────── */
+.fi-sidebar-group-button {
+    color: rgba(255,255,255,0.35) !important;
+}
+.fi-sidebar-group-button:hover {
+    color: rgba(255,255,255,0.6) !important;
+}
+
+/* ══════════════════════════════════════════════════════
+                       TOPBAR / HEADER (GRADASI HIDUP & ELEGAN)
+                    ══════════════════════════════════════════════════════ */
+                    .fi-topbar,
+                    header.fi-topbar,
+                    .fi-topbar nav {
+                        background: linear-gradient(135deg, var(--ks-primary) 0%, #e06886 100%) !important;
+                        border-bottom: none !important;
+                        box-shadow: 0 4px 20px rgba(184, 76, 101, 0.4) !important;
+                    }
+                    
+                    /* Teks & Ikon Navbar: Putih Bersih */
+                    .fi-topbar button,
+                    .fi-topbar a,
+                    .fi-topbar svg,
+                    .fi-topbar span {
+                        color: #ffffff !important;
+                        transition: all 0.2s ease-in-out !important;
+                    }
+                    
+                    /* Efek Bercahaya saat di-Hover */
+                    .fi-topbar button:hover,
+                    .fi-topbar a:hover {
+                        transform: scale(1.05) !important;
+                        text-shadow: 0 0 10px rgba(255, 255, 255, 0.7) !important;
+                    }
+                    
+                    .fi-topbar button:hover svg,
+                    .fi-topbar a:hover svg {
+                        color: #ffffff !important;
+                        filter: drop-shadow(0 0 5px rgba(255,255,255,0.8)) !important;
+                    }
+
+                    /* Breadcrumbs */
+                    .fi-breadcrumbs ol li span,
+                    .fi-breadcrumbs ol li a {
+                        color: rgba(255,255,255,0.85) !important;
+                    }
+                    .fi-breadcrumbs ol li:last-child span {
+                        color: #ffffff !important;
+                        font-weight: 700 !important;
+                        letter-spacing: 0.5px !important;
+                    }
+                    .fi-breadcrumbs ol li svg {
+                        color: rgba(255,255,255,0.6) !important;
+                    }
+
+/* ================================================================
+   MAIN CONTENT AREA
+   ================================================================ */
+.fi-main,
+.fi-body {
+    background-color: #faf6f3 !important;
+}
+
+/* Page heading */
+.fi-header-heading {
+    color: #b84c65 !important;
+    font-weight: 700 !important;
+}
+
+/* ── Buttons primary ────────────────────────────────────────── */
+.fi-btn.fi-btn-color-primary {
+    background-color: #b84c65 !important;
+    border-color: #b84c65 !important;
+    font-weight: 600 !important;
+}
+.fi-btn.fi-btn-color-primary:hover {
+    background-color: #9a3a52 !important;
+    border-color: #9a3a52 !important;
+}
+
+/* ── Stat widget cards ──────────────────────────────────────── */
+.fi-wi-stats-overview-stat {
+    transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+    border-radius: 12px !important;
+}
+.fi-wi-stats-overview-stat:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 24px rgba(184, 76, 101, 0.12) !important;
+}
+
+/* ── Widget & section headings ──────────────────────────────── */
+.fi-wi-chart .fi-section-header-heading,
+.fi-wi-table .fi-section-header-heading,
+.fi-section-header-heading {
+    color: #b84c65 !important;
+    font-weight: 700 !important;
+}
