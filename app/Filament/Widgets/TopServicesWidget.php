@@ -40,8 +40,8 @@ class TopServicesWidget extends ChartWidget
         $labels = [];
         $data   = [];
         $colors = [
-            '#6366f1', '#f59e0b', '#22c55e',
-            '#06b6d4', '#ef4444', '#8b5cf6',
+            '#b84c65', '#f59e0b', '#22c55e',
+            '#06b6d4', '#8b5cf6', '#ef4444',
         ];
 
         $i = 0;

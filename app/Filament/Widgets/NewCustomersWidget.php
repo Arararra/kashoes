@@ -8,6 +8,8 @@ use Carbon\Carbon;
 
 class NewCustomersWidget extends Widget
 {
+    public static function canView(): bool { return false; }
+
     protected static string $view = 'filament.widgets.new-customers-widget';
 
     protected function getViewData(): array

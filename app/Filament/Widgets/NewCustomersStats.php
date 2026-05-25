@@ -3,36 +3,43 @@
 namespace App\Filament\Widgets;
 
 use Filament\Widgets\ChartWidget;
-use Illuminate\Support\Facades\DB;
+use App\Models\Customer;
+use Carbon\Carbon;
 
 class NewCustomersStats extends ChartWidget
 {
-    protected static ?string $heading = 'Chart';
-    
-    public ?int $span = null;
+    protected static ?string $heading = 'Pelanggan Baru (12 Bulan)';
 
-    public function getColumnSpan(): int|string|array
-    {
-        return $this->span ?? 'full';
-    }
+    protected static ?int $sort = 8;
+
+    protected int|string|array $columnSpan = 'full';
 
     protected function getData(): array
     {
-        $data = DB::table('customers')
-            ->selectRaw('MONTH(created_at) as month, COUNT(*) as total')
-            ->whereYear('created_at', now()->year)
-            ->groupByRaw('MONTH(created_at)')
-            ->pluck('total', 'month')
-            ->toArray();
+        $months = [];
+        $counts = [];
+
+        for ($i = 11; $i >= 0; $i--) {
+            $date     = Carbon::now()->subMonths($i);
+            $months[] = $date->translatedFormat('M');
+            $counts[] = Customer::whereYear('created_at', $date->year)
+                ->whereMonth('created_at', $date->month)
+                ->count();
+        }
 
         return [
-            'labels' => array_keys($data),
+            'labels'   => $months,
             'datasets' => [
                 [
-                    'label' => 'New Customers',
-                    'data' => array_values($data),
-                    'backgroundColor' => 'rgba(54, 162, 235, 0.2)',
-                    'borderColor' => 'rgba(54, 162, 235, 1)',
+                    'label'           => 'Pelanggan Baru',
+                    'data'            => $counts,
+                    'backgroundColor' => 'rgba(184, 76, 101, 0.15)',   /* --ks-primary */
+                    'borderColor'     => '#b84c65',
+                    'borderWidth'     => 2,
+                    'pointBackgroundColor' => '#b84c65',
+                    'pointRadius'     => 4,
+                    'fill'            => true,
+                    'tension'         => 0.4,
                 ],
             ],
         ];
@@ -41,5 +48,25 @@ class NewCustomersStats extends ChartWidget
     protected function getType(): string
     {
         return 'line';
+    }
+
+    protected function getOptions(): array
+    {
+        return [
+            'plugins' => [
+                'legend' => ['position' => 'top', 'labels' => ['usePointStyle' => true]],
+            ],
+            'scales' => [
+                'y' => [
+                    'beginAtZero' => true,
+                    'grid' => ['color' => 'rgba(226,216,210,0.5)'],
+                    'ticks' => ['color' => '#a08888', 'stepSize' => 1],
+                ],
+                'x' => [
+                    'grid' => ['display' => false],
+                    'ticks' => ['color' => '#6b5050'],
+                ],
+            ],
+        ];
     }
 }

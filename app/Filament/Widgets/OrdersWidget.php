@@ -8,6 +8,8 @@ use Carbon\Carbon;
 
 class OrdersWidget extends Widget
 {
+    public static function canView(): bool { return false; }
+
     protected static string $view = 'filament.widgets.orders-widget';
 
     protected function getViewData(): array
