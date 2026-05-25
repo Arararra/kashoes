@@ -158,6 +158,26 @@ header.fi-topbar,
     font-weight: 700 !important;
 }
 
+/* Breadcrumb di header halaman — class dari vendor blade */
+.fi-breadcrumbs-item-label {
+    color: #b84c65 !important;
+    opacity: 0.7;
+}
+.fi-breadcrumbs-item-label:hover {
+    color: #b84c65 !important;
+    opacity: 1;
+}
+/* Item terakhir (current page) lebih tegas */
+.fi-breadcrumbs-item:last-child .fi-breadcrumbs-item-label {
+    opacity: 1 !important;
+    font-weight: 600 !important;
+}
+/* Separator icon (>) */
+.fi-breadcrumbs-item-separator {
+    color: #b84c65 !important;
+    opacity: 0.35 !important;
+}
+
 /* ── Buttons primary ────────────────────────────────────────── */
 .fi-btn.fi-btn-color-primary {
     background-color: #b84c65 !important;
