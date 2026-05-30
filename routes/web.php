@@ -3,9 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ReportController;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::redirect('/', '/admin');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/reports/export/excel', [ReportController::class, 'exportToExcel'])
