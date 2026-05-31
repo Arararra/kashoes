@@ -13,7 +13,7 @@ use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\TextArea;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Card;
@@ -98,7 +98,7 @@ class OrderResource extends Resource
                                             : 'text-gray-500',
                                     ]),
 
-                                TextArea::make('customer_address')
+                                Textarea::make('customer_address')
                                     ->label('Alamat')
                                     ->columnSpanFull()
                                     ->required()
@@ -133,7 +133,7 @@ class OrderResource extends Resource
                                             ->live(onBlur: true)
                                             ->afterStateUpdated(fn (Get $get, Set $set) => self::recalculate($get, $set)),
 
-                                        TextArea::make('description')
+                                        Textarea::make('description')
                                             ->columnSpanFull()
                                             ->required()
                                             ->live(onBlur: true),

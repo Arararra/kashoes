@@ -12,7 +12,7 @@ use Filament\Forms\Components\Card;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\TextArea;
+use Filament\Forms\Components\Textarea;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -42,7 +42,7 @@ class UserResource extends Resource
 
                             TextInput::make('phone'),
 
-                            TextArea::make('address')
+                            Textarea::make('address')
                                 ->columnSpanFull(),
 
                             TextInput::make('email')
