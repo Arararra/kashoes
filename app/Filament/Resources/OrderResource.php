@@ -104,6 +104,28 @@ class OrderResource extends Resource
                                     ->required()
                                     ->disabled(fn (Get $get) => ! $get('customer_id'))
                                     ->dehydrated(),
+                                    
+                                TextInput::make('latitude')
+                                    ->label('Latitude')
+                                    ->numeric()
+                                    ->disabled(),
+
+                                TextInput::make('longitude')
+                                    ->label('Longitude')
+                                    ->numeric()
+                                    ->disabled(),
+
+                                Placeholder::make('map_link')
+                                    ->label('Lokasi Peta')
+                                    ->content(function (Get $get) {
+                                        $lat = $get('latitude');
+                                        $lng = $get('longitude');
+                                        if (!$lat || !$lng) return '— Belum ada lokasi';
+                                        
+                                        $url = "https://www.google.com/maps/search/?api=1&query={$lat},{$lng}";
+                                        return \Illuminate\Support\HtmlString::make("<a href=\"{$url}\" target=\"_blank\" class=\"text-primary-600 font-bold underline\">Buka di Google Maps 📍</a>");
+                                    })
+                                    ->columnSpanFull(),
                             ])
                             ->columns(2),
 

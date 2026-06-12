@@ -22,3 +22,13 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Local test scripts and postman collections
+_*
+test_api.php
+*.postman_collection.json
+generate_manual_csv.py
+generate_postman.py
+convert_to_csv.py
+BlackBox_Testing_Report.md
+API_README.md

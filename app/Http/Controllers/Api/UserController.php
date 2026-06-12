@@ -13,6 +13,8 @@ class UserController extends ResourceController
 
     protected function validationRules(string $action): array
     {
+        $id = request()->route('id');
+
         return $action === 'store'
             ? [
                 'name' => 'required|string',
@@ -26,7 +28,7 @@ class UserController extends ResourceController
                 'name' => 'sometimes|string',
                 'phone' => 'sometimes|string',
                 'address' => 'sometimes|string',
-                'email' => 'sometimes|email|unique:users,email',
+                'email' => 'sometimes|email|unique:users,email,' . $id,
                 'password' => 'sometimes|string|min:8',
                 'created_by' => 'nullable|integer|exists:users,id',
             ];

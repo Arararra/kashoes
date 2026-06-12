@@ -18,9 +18,9 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             ServiceSeeder::class,
             UserSeeder::class,
-            CustomerSeeder::class,
-            OrderSeeder::class,
-            CashFlowSeeder::class,
+            // CustomerSeeder::class,
+            // OrderSeeder::class,
+            // CashFlowSeeder::class,
         ]);
     }
 }

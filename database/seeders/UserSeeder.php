@@ -24,7 +24,8 @@ class UserSeeder extends Seeder
 
         $superAdmin->assignRole('super_admin');
 
-        // Create 5 customer users
+        // Create 5 customer users (commented out to keep database fresh except for superadmin)
+        /*
         foreach (range(1, 5) as $i) {
             $user = User::create([
                 'name' => $faker->name(),
@@ -36,5 +37,6 @@ class UserSeeder extends Seeder
 
             $user->assignRole('customer');
         }
+        */
     }
 }

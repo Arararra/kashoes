@@ -27,4 +27,18 @@ class CustomerController extends ResourceController
                 'is_member' => 'sometimes|boolean',
             ];
     }
+
+    public function index(): \Illuminate\Http\JsonResponse
+    {
+        $user = request()->user();
+        if ($user && $user->hasRole('customer')) {
+            $customer = \App\Models\Customer::where('user_id', $user->id)->first();
+            if (!$customer) {
+                return response()->json([]);
+            }
+            return response()->json([$customer]);
+        }
+
+        return response()->json(Customer::latest()->get());
+    }
 }

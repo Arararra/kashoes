@@ -11,10 +11,12 @@ use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+use Laravel\Sanctum\HasApiTokens;
+
 class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasRoles;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles;
 
     /**
      * The attributes that are mass assignable.
@@ -53,6 +55,15 @@ class User extends Authenticatable implements FilamentUser
         ];
     }
 
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = [
+        'is_member',
+    ];
+
     public function canAccessPanel(Panel $panel): bool
     {
         return $this->hasAnyRole(['super_admin', 'admin']);
@@ -65,4 +76,21 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->belongsTo(self::class, 'created_by');
     }
+
+    /**
+     * Get the customer profile associated with the user.
+     */
+    public function customer(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Customer::class, 'user_id');
+    }
+
+    /**
+     * Accessor for is_member attribute.
+     */
+    public function getIsMemberAttribute(): bool
+    {
+        return $this->customer ? (bool)$this->customer->is_member : false;
+    }
 }
+
