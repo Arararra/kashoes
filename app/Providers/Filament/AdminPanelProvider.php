@@ -31,7 +31,9 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
+            ->login(\App\Filament\Pages\Auth\Login::class)
+            ->brandLogo(asset('images/KaShoes.png'))
+            ->brandLogoHeight('5rem')
             // ── Brand identity ──────────────────────────────────────────
             ->brandName('')
             ->spa()
@@ -74,6 +76,8 @@ class AdminPanelProvider extends PanelProvider
 
                     body, html { background-color: var(--ks-bg) !important; }
                     .fi-main, .fi-body { background-color: var(--ks-bg) !important; }
+
+
 
                     /* ══════════════════════════════════════════════════════
                        SIDEBAR & TOPBAR 
@@ -249,6 +253,8 @@ class AdminPanelProvider extends PanelProvider
 
                     /* ── TOPBAR ICON & BREADCRUMB ── */
                     .fi-topbar button, .fi-topbar a, .fi-topbar svg, .fi-topbar span { color: #ffffff !important; }
+                    .fi-dropdown-panel button, .fi-dropdown-panel a, .fi-dropdown-panel span { color: var(--ks-text) !important; }
+                    .fi-dropdown-panel svg { color: var(--ks-text-secondary) !important; }
                     .fi-topbar .fi-breadcrumbs ol li span, .fi-topbar .fi-breadcrumbs ol li a { color: rgba(255,255,255,0.85) !important; }
                     .fi-topbar .fi-breadcrumbs ol li:last-child span { color: #ffffff !important; font-weight: 700 !important; }
                     /* Breadcrumb di HEADER HALAMAN — warna brand pink */
@@ -274,8 +280,8 @@ class AdminPanelProvider extends PanelProvider
                     
                     /* Buttons & Inputs */
                     .fi-btn-color-primary.fi-btn { background-color: var(--ks-primary) !important; border-color: var(--ks-primary) !important; }
-                    .fi-input { border-color: var(--ks-border) !important; background: var(--ks-bg) !important; color: var(--ks-text) !important; }
-                    .fi-input:focus { border-color: var(--ks-primary) !important; outline: 2px solid rgba(184,76,101,0.2) !important; }
+                    .fi-main .fi-input { border-color: var(--ks-border) !important; background: var(--ks-bg) !important; color: var(--ks-text) !important; }
+                    .fi-main .fi-input:focus { border-color: var(--ks-primary) !important; outline: 2px solid rgba(184,76,101,0.2) !important; }
                     </style>
                 '),
             )

@@ -123,7 +123,7 @@ class OrderResource extends Resource
                                         if (!$lat || !$lng) return '— Belum ada lokasi';
                                         
                                         $url = "https://www.google.com/maps/search/?api=1&query={$lat},{$lng}";
-                                        return \Illuminate\Support\HtmlString::make("<a href=\"{$url}\" target=\"_blank\" class=\"text-primary-600 font-bold underline\">Buka di Google Maps 📍</a>");
+                                        return new \Illuminate\Support\HtmlString("<a href=\"{$url}\" target=\"_blank\" class=\"text-primary-600 font-bold underline\">Buka di Google Maps 📍</a>");
                                     })
                                     ->columnSpanFull(),
                             ])
@@ -224,6 +224,7 @@ class OrderResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('customer.name')->label('Customer')->searchable(),
                 TextColumn::make('estimated_finished_date')->label('Est. Finished Date')->date(),

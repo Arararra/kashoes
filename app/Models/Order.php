@@ -16,6 +16,8 @@ class Order extends Model
         'customer_name',
         'customer_phone',
         'customer_address',
+        'latitude',
+        'longitude',
         'services',
         'total_price',
         'discount',
@@ -31,6 +33,8 @@ class Order extends Model
         'finished_date' => 'date',
         'total_price' => 'decimal:2',
         'discount' => 'decimal:2',
+        'latitude' => 'decimal:8',
+        'longitude' => 'decimal:8',
     ];
 
     public function customer(): BelongsTo
