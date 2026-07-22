@@ -16,11 +16,7 @@ class ReportController extends Controller
     public function exportToExcel(Request $request)
     {
         $data = $this->getReportData($request);
-
-        $month = str_pad($request->input('month', now()->month), 2, '0', STR_PAD_LEFT);
-        $year  = $request->input('year', now()->year);
-
-        return Excel::download(new ReportExport($data), "laporan_{$year}_{$month}.xlsx");
+        return Excel::download(new ReportExport($data), "laporan_{$data['filenameLabel']}.xlsx");
     }
 
     public function exportToPdf(Request $request)
@@ -30,31 +26,56 @@ class ReportController extends Controller
 
         $pdf = PDF::loadView('exports.report', $data);
 
-        $month = str_pad($request->input('month', now()->month), 2, '0', STR_PAD_LEFT);
-        $year  = $request->input('year', now()->year);
-
-        return $pdf->download("laporan_{$year}_{$month}.pdf");
+        return $pdf->download("laporan_{$data['filenameLabel']}.pdf");
     }
 
     private function getReportData(Request $request): array
     {
+        $period = $request->input('period', 'this_month');
         $month = (int) $request->input('month', now()->month);
         $year  = (int) $request->input('year', now()->year);
 
-        $cashFlows = CashFlow::with('creator')
-            ->whereMonth('date', $month)
-            ->whereYear('date', $year)
-            ->orderBy('date', 'desc')
-            ->get();
+        $cashFlowQuery = CashFlow::with('creator')->orderBy('date', 'desc');
+        $orderQuery = Order::whereNotNull('services');
+
+        if ($period === 'this_month') {
+            $month = now()->month;
+            $year = now()->year;
+            $cashFlowQuery->whereMonth('date', $month)->whereYear('date', $year);
+            $orderQuery->whereMonth('created_at', $month)->whereYear('created_at', $year);
+            $monthLabel = now()->translatedFormat('F Y');
+            $start = Carbon::now()->startOfMonth()->format('Y-m-d');
+            $end = Carbon::now()->endOfMonth()->format('Y-m-d');
+            $filenameLabel = "{$year}_" . str_pad($month, 2, '0', STR_PAD_LEFT);
+        } elseif ($period === 'this_year') {
+            $year = now()->year;
+            $cashFlowQuery->whereYear('date', $year);
+            $orderQuery->whereYear('created_at', $year);
+            $monthLabel = "Tahun $year";
+            $start = Carbon::now()->startOfYear()->format('Y-m-d');
+            $end = Carbon::now()->endOfYear()->format('Y-m-d');
+            $filenameLabel = "{$year}";
+        } elseif ($period === 'all_time') {
+            $monthLabel = "Semua Waktu";
+            $start = CashFlow::min('date') ? Carbon::parse(CashFlow::min('date'))->format('Y-m-d') : '1970-01-01';
+            $end = Carbon::now()->format('Y-m-d');
+            $filenameLabel = "semua_waktu";
+        } else {
+            $cashFlowQuery->whereMonth('date', $month)->whereYear('date', $year);
+            $orderQuery->whereMonth('created_at', $month)->whereYear('created_at', $year);
+            $monthLabel = Carbon::createFromDate($year, $month, 1)->translatedFormat('F Y');
+            $start = Carbon::createFromDate($year, $month, 1)->format('Y-m-d');
+            $end = Carbon::createFromDate($year, $month, 1)->endOfMonth()->format('Y-m-d');
+            $filenameLabel = "{$year}_" . str_pad($month, 2, '0', STR_PAD_LEFT);
+        }
+
+        $cashFlows = $cashFlowQuery->get();
 
         $income   = $cashFlows->where('type', 'income')->sum('amount');
         $expenses = $cashFlows->where('type', 'expense')->sum('amount');
 
         // ── Service sales ──────────────────────────────────────────────
-        $orders = Order::whereMonth('created_at', $month)
-            ->whereYear('created_at', $year)
-            ->whereNotNull('services')
-            ->get();
+        $orders = $orderQuery->get();
 
         $serviceSales = [];
         foreach ($orders as $order) {
@@ -78,8 +99,6 @@ class ReportController extends Controller
         }
         usort($serviceSales, fn($a, $b) => $b['revenue'] <=> $a['revenue']);
 
-        $monthLabel = Carbon::createFromDate($year, $month, 1)->translatedFormat('F Y');
-
         return [
             'cashFlows'    => $cashFlows,
             'income'       => $income,
@@ -94,12 +113,13 @@ class ReportController extends Controller
                 'created_by'  => $flow->creator?->name ?? 'N/A',
                 'amount'      => (float) $flow->amount,
             ])->toArray(),
-            'filter'     => 'monthly',
-            'start_date' => Carbon::createFromDate($year, $month, 1)->format('Y-m-d'),
-            'end_date'   => Carbon::createFromDate($year, $month, 1)->endOfMonth()->format('Y-m-d'),
+            'filter'     => $period,
+            'start_date' => $start,
+            'end_date'   => $end,
             'month'      => $month,
             'year'       => $year,
             'monthLabel' => $monthLabel,
+            'filenameLabel' => $filenameLabel,
         ];
     }
 }

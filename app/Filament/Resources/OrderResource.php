@@ -78,7 +78,7 @@ class OrderResource extends Resource
 
                                 TextInput::make('customer_phone')
                                     ->label('No Telepon')
-                                    ->required()
+                                    ->placeholder('-')
                                     ->disabled(fn (Get $get) => ! $get('customer_id'))
                                     ->dehydrated(),
 
@@ -101,7 +101,7 @@ class OrderResource extends Resource
                                 Textarea::make('customer_address')
                                     ->label('Alamat')
                                     ->columnSpanFull()
-                                    ->required()
+                                    ->placeholder('-')
                                     ->disabled(fn (Get $get) => ! $get('customer_id'))
                                     ->dehydrated(),
                                     
@@ -157,7 +157,7 @@ class OrderResource extends Resource
 
                                         Textarea::make('description')
                                             ->columnSpanFull()
-                                            ->required()
+                                            ->placeholder('-')
                                             ->live(onBlur: true),
                                     ])
                                     ->columns(2)
