@@ -54,14 +54,16 @@ class Order extends Model
 
     protected static function booted(): void
     {
-        // ── UPDATE: pantau perubahan status ────────────────────────────
         static::updated(function (Order $order): void {
-            $prevStatus  = $order->getOriginal('status');
-            $newStatus   = $order->status;
-            $totalHarga  = (float) $order->total_price;
+            $prevStatus   = $order->getOriginal('status');
+            $newStatus    = $order->status;
+            $totalHarga   = (float) $order->total_price;
+            $statusChanged = $order->isDirty('status');
+            $priceChanged  = $order->isDirty('total_price');
 
-            // 1. Baru menjadi 'completed' (Selesai/Sudah Diambil) → catat income
-            if ($order->isDirty('status') && $newStatus === 'completed' && $prevStatus !== 'completed') {
+            // ── 1. Status baru menjadi 'completed' ──────────────────────
+            //    → Buat CashFlow income (hanya jika sebelumnya bukan completed)
+            if ($statusChanged && $newStatus === 'completed' && $prevStatus !== 'completed') {
                 $order->recordCashFlow(
                     type: 'income',
                     amount: $totalHarga,
@@ -70,36 +72,31 @@ class Order extends Model
                 );
             }
 
-            // 2. Dari 'completed' → 'cancelled': hapus income lalu catat reversal
-            if ($order->isDirty('status') && $newStatus === 'cancelled' && $prevStatus === 'completed') {
-                CashFlow::where('order_id', $order->id)->where('type', 'income')->delete();
-
-                $order->recordCashFlow(
-                    type: 'expense',
-                    amount: $totalHarga,
-                    title: sprintf('Order #%d - Dibatalkan (Reversal)', $order->id),
-                    description: sprintf('Order milik %s dibatalkan setelah selesai.', $order->customer_name),
-                );
+            // ── 2. Status KELUAR dari 'completed' ke status apapun ──────
+            //    → Hapus semua income CashFlow order ini (tidak perlu reversal
+            //      karena pesanannya belum tentu benar-benar dibayar)
+            if ($statusChanged && $prevStatus === 'completed' && $newStatus !== 'completed') {
+                CashFlow::where('order_id', $order->id)->delete();
             }
 
-            // 3. Harga berubah saat order sudah 'completed' → koreksi CashFlow
-            if ($order->isDirty('total_price') && $newStatus === 'completed') {
-                $originalTotal = (float) $order->getOriginal('total_price');
-                $difference    = $totalHarga - $originalTotal;
+            // ── 3. Harga berubah saat status masih/tetap 'completed' ────
+            //    → UPDATE langsung amount di CashFlow yang sudah ada,
+            //      bukan buat entri koreksi baru (lebih bersih di DB)
+            if ($priceChanged && !$statusChanged && $newStatus === 'completed') {
+                $existing = CashFlow::where('order_id', $order->id)
+                    ->where('type', 'income')
+                    ->first();
 
-                if ($difference > 0) {
+                if ($existing) {
+                    // Langsung update amount-nya
+                    $existing->update(['amount' => $totalHarga]);
+                } else {
+                    // Belum ada entri (edge case), buat baru
                     $order->recordCashFlow(
                         type: 'income',
-                        amount: $difference,
-                        title: sprintf('Order #%d - Koreksi Harga (+)', $order->id),
-                        description: sprintf('Total naik dari Rp%s ke Rp%s', number_format($originalTotal, 0, ',', '.'), number_format($totalHarga, 0, ',', '.')),
-                    );
-                } elseif ($difference < 0) {
-                    $order->recordCashFlow(
-                        type: 'expense',
-                        amount: abs($difference),
-                        title: sprintf('Order #%d - Koreksi Harga (-)', $order->id),
-                        description: sprintf('Total turun dari Rp%s ke Rp%s', number_format($originalTotal, 0, ',', '.'), number_format($totalHarga, 0, ',', '.')),
+                        amount: $totalHarga,
+                        title: sprintf('Order #%d - Pembayaran Diterima', $order->id),
+                        description: sprintf('Order selesai atas nama %s', $order->customer_name),
                     );
                 }
             }
@@ -115,6 +112,7 @@ class Order extends Model
             CashFlow::where('order_id', $order->id)->forceDelete();
         });
     }
+
 
     private function recordCashFlow(string $type, float $amount, string $title, ?string $description = null): void
     {
