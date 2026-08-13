@@ -34,12 +34,29 @@ class LatestOrdersWidget extends BaseWidget
 
                 TextColumn::make('services')
                     ->label('Services')
-                    ->formatStateUsing(function ($state) {
-                        if (empty($state)) return '—';
-                        $names = collect($state)->map(function ($s) {
-                            $service = \App\Models\Service::find($s['service_id'] ?? null);
-                            return $service?->name ?? '—';
-                        })->filter()->implode(', ');
+                    ->formatStateUsing(function ($state, Order $record) {
+                        $items = $record->services;
+                        if (is_string($items)) {
+                            $items = json_decode($items, true);
+                        }
+                        if (! is_array($items) || empty($items)) {
+                            return '—';
+                        }
+
+                        $serviceIds = collect($items)
+                            ->pluck('service_id')
+                            ->filter()
+                            ->unique()
+                            ->toArray();
+
+                        if (empty($serviceIds)) {
+                            return '—';
+                        }
+
+                        $names = \App\Models\Service::whereIn('id', $serviceIds)
+                            ->pluck('name')
+                            ->implode(', ');
+
                         return $names ?: '—';
                     })
                     ->limit(40),

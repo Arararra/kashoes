@@ -227,6 +227,32 @@ class OrderResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('customer.name')->label('Customer')->searchable(),
+                TextColumn::make('services')
+                    ->label('Services')
+                    ->formatStateUsing(function ($state, Order $record) {
+                        $items = $record->services;
+                        if (is_string($items)) {
+                            $items = json_decode($items, true);
+                        }
+                        if (! is_array($items) || empty($items)) {
+                            return '—';
+                        }
+
+                        $serviceIds = collect($items)
+                            ->pluck('service_id')
+                            ->filter()
+                            ->unique()
+                            ->toArray();
+
+                        if (empty($serviceIds)) {
+                            return '—';
+                        }
+
+                        return \App\Models\Service::whereIn('id', $serviceIds)
+                            ->pluck('name')
+                            ->implode(', ') ?: '—';
+                    })
+                    ->limit(30),
                 TextColumn::make('estimated_finished_date')->label('Est. Finished Date')->date(),
                 TextColumn::make('finished_date')->label('Finished Date')->date()->placeholder('—'),
                 TextColumn::make('discount')->label('Diskon')->money('IDR')->placeholder('—'),
