@@ -28,13 +28,13 @@ class Order extends Model
     ];
 
     protected $casts = [
-        'services' => 'array',
+        'services'               => 'array',
         'estimated_finished_date' => 'date',
-        'finished_date' => 'date',
-        'total_price' => 'decimal:2',
-        'discount' => 'decimal:2',
-        'latitude' => 'decimal:8',
-        'longitude' => 'decimal:8',
+        'finished_date'          => 'date',
+        'total_price'            => 'decimal:2',
+        'discount'               => 'decimal:2',
+        'latitude'               => 'decimal:8',
+        'longitude'              => 'decimal:8',
     ];
 
     public function customer(): BelongsTo
@@ -47,9 +47,6 @@ class Order extends Model
         return $this->belongsTo(Service::class, 'service_id');
     }
 
-    /**
-     * Get the user who created this order.
-     */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -57,47 +54,65 @@ class Order extends Model
 
     protected static function booted(): void
     {
-        static::created(function (Order $order): void {
-            $order->recordCashFlow(
-                type: 'income',
-                amount: $order->total_price,
-                title: sprintf('Order #%d payment received', $order->id),
-                description: sprintf('Order created for %s', $order->customer_name),
-            );
-        });
-
+        // ── UPDATE: pantau perubahan status ────────────────────────────
         static::updated(function (Order $order): void {
-            $originalTotal = (float) $order->getOriginal('total_price');
-            $currentTotal = (float) $order->total_price;
+            $prevStatus  = $order->getOriginal('status');
+            $newStatus   = $order->status;
+            $totalHarga  = (float) $order->total_price;
 
-            if ($order->isDirty('total_price') && $currentTotal !== $originalTotal) {
-                $difference = $currentTotal - $originalTotal;
+            // 1. Baru menjadi 'completed' (Selesai/Sudah Diambil) → catat income
+            if ($order->isDirty('status') && $newStatus === 'completed' && $prevStatus !== 'completed') {
+                $order->recordCashFlow(
+                    type: 'income',
+                    amount: $totalHarga,
+                    title: sprintf('Order #%d - Pembayaran Diterima', $order->id),
+                    description: sprintf('Order selesai atas nama %s', $order->customer_name),
+                );
+            }
+
+            // 2. Dari 'completed' → 'cancelled': hapus income lalu catat reversal
+            if ($order->isDirty('status') && $newStatus === 'cancelled' && $prevStatus === 'completed') {
+                CashFlow::where('order_id', $order->id)->where('type', 'income')->delete();
+
+                $order->recordCashFlow(
+                    type: 'expense',
+                    amount: $totalHarga,
+                    title: sprintf('Order #%d - Dibatalkan (Reversal)', $order->id),
+                    description: sprintf('Order milik %s dibatalkan setelah selesai.', $order->customer_name),
+                );
+            }
+
+            // 3. Harga berubah saat order sudah 'completed' → koreksi CashFlow
+            if ($order->isDirty('total_price') && $newStatus === 'completed') {
+                $originalTotal = (float) $order->getOriginal('total_price');
+                $difference    = $totalHarga - $originalTotal;
 
                 if ($difference > 0) {
                     $order->recordCashFlow(
                         type: 'income',
                         amount: $difference,
-                        title: sprintf('Order #%d amount updated', $order->id),
-                        description: sprintf('Order total increased from %s to %s', number_format($originalTotal, 2), number_format($currentTotal, 2)),
+                        title: sprintf('Order #%d - Koreksi Harga (+)', $order->id),
+                        description: sprintf('Total naik dari Rp%s ke Rp%s', number_format($originalTotal, 0, ',', '.'), number_format($totalHarga, 0, ',', '.')),
                     );
                 } elseif ($difference < 0) {
                     $order->recordCashFlow(
                         type: 'expense',
                         amount: abs($difference),
-                        title: sprintf('Order #%d amount reduced', $order->id),
-                        description: sprintf('Order total decreased from %s to %s', number_format($originalTotal, 2), number_format($currentTotal, 2)),
+                        title: sprintf('Order #%d - Koreksi Harga (-)', $order->id),
+                        description: sprintf('Total turun dari Rp%s ke Rp%s', number_format($originalTotal, 0, ',', '.'), number_format($totalHarga, 0, ',', '.')),
                     );
                 }
             }
+        });
 
-            if ($order->isDirty('status') && $order->status === 'cancelled' && $order->getOriginal('status') !== 'cancelled') {
-                $order->recordCashFlow(
-                    type: 'expense',
-                    amount: $currentTotal,
-                    title: sprintf('Order #%d cancelled', $order->id),
-                    description: 'Order cancelled and amount refunded/reversed.',
-                );
-            }
+        // ── SOFT DELETE → hapus semua CashFlow terkait order ──────────
+        static::deleted(function (Order $order): void {
+            CashFlow::where('order_id', $order->id)->delete();
+        });
+
+        // ── FORCE DELETE → hapus permanen CashFlow terkait ─────────────
+        static::forceDeleted(function (Order $order): void {
+            CashFlow::where('order_id', $order->id)->forceDelete();
         });
     }
 
@@ -108,12 +123,13 @@ class Order extends Model
         }
 
         CashFlow::create([
-            'date' => now()->toDateString(),
-            'type' => $type,
-            'title' => $title,
+            'date'        => now()->toDateString(),
+            'type'        => $type,
+            'title'       => $title,
             'description' => $description,
-            'amount' => $amount,
-            'created_by' => auth()->id(),
+            'amount'      => $amount,
+            'created_by'  => auth()->id(),
+            'order_id'    => $this->id,
         ]);
     }
 }
