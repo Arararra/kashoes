@@ -39,29 +39,32 @@ class Report extends Page
     protected function getViewData(): array
     {
         $cashFlowQuery = CashFlow::query()->orderBy('date', 'desc');
-        $orderQuery = Order::query()->whereNotNull('services');
+        $orderQuery = Order::query()
+            ->where('status', 'completed')
+            ->whereNotNull('finished_date')
+            ->whereNotNull('services');
 
         if ($this->filterPeriod === 'this_month') {
             $month = now()->month;
             $year = now()->year;
             $cashFlowQuery->whereMonth('date', $month)->whereYear('date', $year);
-            $orderQuery->whereMonth('created_at', $month)->whereYear('created_at', $year);
+            $orderQuery->whereMonth('finished_date', $month)->whereYear('finished_date', $year);
             $monthLabel = now()->translatedFormat('F Y');
             $this->filterMonth = str_pad($month, 2, '0', STR_PAD_LEFT);
             $this->filterYear = $year;
         } elseif ($this->filterPeriod === 'this_year') {
             $year = now()->year;
             $cashFlowQuery->whereYear('date', $year);
-            $orderQuery->whereYear('created_at', $year);
+            $orderQuery->whereYear('finished_date', $year);
             $monthLabel = "Tahun $year";
             $this->filterYear = $year;
         } elseif ($this->filterPeriod === 'all_time') {
-            $monthLabel = "Semua Waktu";
+            $monthLabel = 'Semua Waktu';
         } else {
-            $month = (int) $this->filterMonth;
-            $year = (int) $this->filterYear;
+            $month = min(12, max(1, (int) $this->filterMonth));
+            $year = min(2100, max(2000, (int) $this->filterYear));
             $cashFlowQuery->whereMonth('date', $month)->whereYear('date', $year);
-            $orderQuery->whereMonth('created_at', $month)->whereYear('created_at', $year);
+            $orderQuery->whereMonth('finished_date', $month)->whereYear('finished_date', $year);
             $monthLabel = Carbon::createFromDate($year, $month, 1)->translatedFormat('F Y');
         }
 
@@ -78,7 +81,7 @@ class Report extends Page
         // Kumpulkan semua service_id dulu, lalu load sekaligus
         $allServiceIds = collect();
         foreach ($orders as $order) {
-            foreach ((array) $order->services as $item) {
+            foreach ($order->serviceLineItems() as $item) {
                 if ($sid = $item['service_id'] ?? null) {
                     $allServiceIds->push($sid);
                 }
@@ -89,10 +92,10 @@ class Report extends Page
 
         $serviceSales = [];
         foreach ($orders as $order) {
-            foreach ((array) $order->services as $item) {
+            foreach ($order->serviceLineItems() as $item) {
                 $serviceId = $item['service_id'] ?? null;
                 $qty = (int) ($item['quantity'] ?? 1);
-                $price = (float) ($item['price'] ?? 0);
+                $lineTotal = (float) ($item['line_total'] ?? 0);
 
                 if ($serviceId) {
                     if (! isset($serviceSales[$serviceId])) {
@@ -103,7 +106,7 @@ class Report extends Page
                         ];
                     }
                     $serviceSales[$serviceId]['quantity'] += $qty;
-                    $serviceSales[$serviceId]['revenue'] += $price;
+                    $serviceSales[$serviceId]['revenue'] += $lineTotal;
                 }
             }
         }

@@ -10,13 +10,8 @@ class Service extends Model
     protected $fillable = [
         'name',
         'price',
-        'created_by'
+        'created_by',
     ];
-
-    public function orders()
-    {
-        return $this->hasMany(Order::class, 'service_id');
-    }
 
     /**
      * Get the user who created this service.

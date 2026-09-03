@@ -486,8 +486,10 @@
                     <div class="svc-desc">{{ $item['description'] }}</div>
                 @endif
                 <div class="svc-price-row">
-                    <span class="svc-qty">× {{ $item['quantity'] }}</span>
-                    <span class="svc-price">Rp {{ number_format($item['price'], 0, ',', '.') }}</span>
+                    <span class="svc-qty">
+                        {{ $item['quantity'] }} × Rp {{ number_format($item['unit_price'], 0, ',', '.') }}
+                    </span>
+                    <span class="svc-price">Rp {{ number_format($item['line_total'], 0, ',', '.') }}</span>
                 </div>
             </div>
             @endforeach

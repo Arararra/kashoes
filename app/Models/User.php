@@ -3,20 +3,19 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Spatie\Permission\Traits\HasRoles;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable, HasRoles;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -28,8 +27,9 @@ class User extends Authenticatable implements FilamentUser
         'phone',
         'address',
         'email',
+        'google_id',
         'password',
-        'created_by'
+        'created_by',
     ];
 
     /**
@@ -90,7 +90,20 @@ class User extends Authenticatable implements FilamentUser
      */
     public function getIsMemberAttribute(): bool
     {
-        return $this->customer ? (bool)$this->customer->is_member : false;
+        return $this->customer ? (bool) $this->customer->is_member : false;
+    }
+
+    protected static function booted(): void
+    {
+        static::updated(function (User $user): void {
+            $changes = collect(['name', 'phone', 'address'])
+                ->filter(fn (string $field): bool => $user->wasChanged($field))
+                ->mapWithKeys(fn (string $field): array => [$field => $user->{$field}])
+                ->all();
+
+            if ($changes !== []) {
+                $user->customer?->updateQuietly($changes);
+            }
+        });
     }
 }
-

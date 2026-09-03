@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Customer;
 use App\Models\Order;
-use App\Models\CashFlow;
-use Illuminate\Http\JsonResponse;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 
 class DashboardController extends Controller
 {
@@ -16,47 +16,46 @@ class DashboardController extends Controller
         $startOfMonth = Carbon::now()->startOfMonth();
 
         $user = auth('sanctum')->user();
-        $isCustomer = $user && $user->hasRole('customer');
+        $isAdmin = $user && method_exists($user, 'hasAnyRole') && $user->hasAnyRole(['admin', 'super_admin']);
         $customerId = null;
 
-        if ($isCustomer) {
-            $customer = \App\Models\Customer::where('user_id', $user->id)->first();
-            if ($customer) {
-                $customerId = $customer->id;
-            }
+        if ($user && ! $isAdmin) {
+            $customer = Customer::where('user_id', $user->id)->first();
+            $customerId = $customer?->id;
         }
 
         // Base order query
         $orderQuery = Order::query();
-        if ($customerId) {
+        if (! $isAdmin) {
+            if ($customerId) {
+                $orderQuery->where('customer_id', $customerId);
+            } else {
+                $orderQuery->whereRaw('1 = 0');
+            }
+        } elseif ($customerId) {
             $orderQuery->where('customer_id', $customerId);
         }
 
         // Orders stats
         $totalOrdersToday = (clone $orderQuery)->whereDate('created_at', $today)->count();
         $totalOrdersMonth = (clone $orderQuery)->where('created_at', '>=', $startOfMonth)->count();
-        
+
         $activeOrders = (clone $orderQuery)->whereIn('status', ['pending', 'in_progress'])->count();
         $readyOrders = (clone $orderQuery)->where('status', 'ready_for_pickup')->count();
 
-        // Base revenue query
-        $revenueQuery = CashFlow::where('type', 'income');
-        if ($customerId) {
-            // Usually customers don't see revenue, or they only see their spending.
-            // If it's a customer, revenue might be irrelevant or it's their total spending.
-            // But let's filter it by their orders if needed, or just return 0.
-            $revenueQuery->where('reference_id', 'LIKE', 'ORD-%'); // Need to join or just return 0
-            // For simplicity, let's just return 0 for customer revenue.
+        // Revenue query
+        if (! $isAdmin) {
             $revenueToday = 0;
             $revenueMonth = 0;
         } else {
+            $revenueQuery = Order::where('status', 'completed');
             $revenueToday = (clone $revenueQuery)
-                ->whereDate('date', $today)
-                ->sum('amount');
-                
+                ->whereDate('finished_date', $today)
+                ->sum('total_price');
+
             $revenueMonth = (clone $revenueQuery)
-                ->where('date', '>=', $startOfMonth)
-                ->sum('amount');
+                ->where('finished_date', '>=', $startOfMonth)
+                ->sum('total_price');
         }
 
         return response()->json([
@@ -71,8 +70,8 @@ class DashboardController extends Controller
                 'revenue' => [
                     'today' => $revenueToday,
                     'this_month' => $revenueMonth,
-                ]
-            ]
+                ],
+            ],
         ]);
     }
 }

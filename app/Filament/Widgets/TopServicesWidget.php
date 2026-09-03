@@ -12,15 +12,15 @@ class TopServicesWidget extends ChartWidget
 
     protected static ?int $sort = 5;
 
-    protected int | string | array $columnSpan = [
+    protected int|string|array $columnSpan = [
         'default' => 'full',
-        'md'      => 1,
+        'md' => 1,
     ];
 
     protected function getData(): array
     {
         // Ambil semua orders, flatten services JSON, hitung per service_id
-        $orders = Order::whereNotNull('services')->get();
+        $orders = Order::where('status', 'completed')->whereNotNull('services')->get();
 
         $serviceCounts = [];
 
@@ -38,27 +38,25 @@ class TopServicesWidget extends ChartWidget
         $top = array_slice($serviceCounts, 0, 6, true);
 
         $labels = [];
-        $data   = [];
+        $data = [];
         $colors = [
             '#b84c65', '#f59e0b', '#22c55e',
             '#06b6d4', '#8b5cf6', '#ef4444',
         ];
 
-        $i = 0;
+        $serviceNames = Service::whereIn('id', array_keys($top))->pluck('name', 'id');
         foreach ($top as $serviceId => $count) {
-            $service  = Service::find($serviceId);
-            $labels[] = $service?->name ?? 'Service #' . $serviceId;
-            $data[]   = $count;
-            $i++;
+            $labels[] = $serviceNames[$serviceId] ?? 'Service #'.$serviceId;
+            $data[] = $count;
         }
 
         return [
             'datasets' => [
                 [
-                    'label'           => 'Jumlah Dipesan',
-                    'data'            => $data,
+                    'label' => 'Jumlah Dipesan',
+                    'data' => $data,
                     'backgroundColor' => array_slice($colors, 0, count($data)),
-                    'borderRadius'    => 6,
+                    'borderRadius' => 6,
                 ],
             ],
             'labels' => $labels,
@@ -74,7 +72,7 @@ class TopServicesWidget extends ChartWidget
     {
         return [
             'indexAxis' => 'y',
-            'plugins'   => [
+            'plugins' => [
                 'legend' => ['display' => false],
             ],
             'scales' => [

@@ -3,22 +3,18 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
-use App\Filament\Resources\UserResource\RelationManagers;
 use App\Models\User;
-use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Card;
+use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Tables\Table;
 
 class UserResource extends Resource
 {
@@ -64,6 +60,8 @@ class UserResource extends Resource
                                 ->preload()
                                 ->searchable()
                                 ->required()
+                                ->disabled(fn (?User $record): bool => $record?->id === auth()->id())
+                                ->dehydrated(fn (?User $record): bool => $record?->id !== auth()->id())
                                 ->columnSpanFull(),
                         ])->columns(2)->columnSpan(2),
 
@@ -109,11 +107,7 @@ class UserResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ]);
+            ->bulkActions([]);
     }
 
     public static function getRelations(): array

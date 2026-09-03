@@ -13,7 +13,7 @@ class OrderCashFlowTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_order_creation_generates_income_cash_flow(): void
+    public function test_pending_order_does_not_generate_income_cash_flow(): void
     {
         $user = User::factory()->create();
         $customer = Customer::create([
@@ -46,15 +46,10 @@ class OrderCashFlowTest extends TestCase
             'created_by' => $user->id,
         ]);
 
-        $this->assertDatabaseHas('cash_flows', [
-            'type' => 'income',
-            'title' => "Order #{$order->id} payment received",
-            'amount' => 50000,
-            'created_by' => $user->id,
-        ]);
+        $this->assertDatabaseMissing('cash_flows', ['order_id' => $order->id]);
     }
 
-    public function test_order_cancellation_generates_expense_cash_flow(): void
+    public function test_order_cancellation_does_not_record_revenue_or_expense(): void
     {
         $user = User::factory()->create();
         $customer = Customer::create([
@@ -90,11 +85,6 @@ class OrderCashFlowTest extends TestCase
         $order->status = 'cancelled';
         $order->save();
 
-        $this->assertDatabaseHas('cash_flows', [
-            'type' => 'expense',
-            'title' => "Order #{$order->id} cancelled",
-            'amount' => 120000,
-            'created_by' => $user->id,
-        ]);
+        $this->assertDatabaseMissing('cash_flows', ['order_id' => $order->id]);
     }
 }

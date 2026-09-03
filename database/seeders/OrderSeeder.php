@@ -35,7 +35,7 @@ class OrderSeeder extends Seeder
 
                 foreach ($services->random($faker->numberBetween(1, min(3, $services->count()))) as $service) {
                     $quantity = $faker->numberBetween(1, 3);
-                    $price = $service->price * $quantity;
+                    $price = $service->price;
 
                     $orderServices[] = [
                         'service_id' => $service->id,
@@ -44,7 +44,7 @@ class OrderSeeder extends Seeder
                         'description' => $faker->sentence(6),
                     ];
 
-                    $totalPrice += $price;
+                    $totalPrice += $price * $quantity;
                 }
 
                 $status = $faker->randomElement($statuses);
