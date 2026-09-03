@@ -14,6 +14,7 @@ class CashFlow extends Model
         'description',
         'amount',
         'created_by',
+        'order_id',
     ];
 
     protected $casts = [

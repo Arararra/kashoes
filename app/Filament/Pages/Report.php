@@ -23,53 +23,65 @@ class Report extends Page
 
     protected static string $view = 'filament.pages.report';
 
+    public string $filterPeriod = 'this_month';
+
     public string $filterMonth;
 
     public string $filterYear;
 
     public function mount(): void
     {
-        // Cari bulan terakhir yang punya data
-        $lastMonthWithData = CashFlow::selectRaw('year(date) as year, month(date) as month')
-            ->groupByRaw('year(date), month(date)')
-            ->orderByRaw('year(date) desc, month(date) desc')
-            ->first();
-
-        if ($lastMonthWithData) {
-            $this->filterMonth = str_pad($lastMonthWithData->month, 2, '0', STR_PAD_LEFT);
-            $this->filterYear = $lastMonthWithData->year;
-        } else {
-            // Fallback jika belum ada data
-            $this->filterMonth = now()->format('m');
-            $this->filterYear = now()->format('Y');
-        }
+        $this->filterPeriod = 'this_month';
+        $this->filterMonth = now()->format('m');
+        $this->filterYear = now()->format('Y');
     }
 
     protected function getViewData(): array
     {
-        $month = (int) $this->filterMonth;
-        $year = (int) $this->filterYear;
+        $cashFlowQuery = CashFlow::query()->orderBy('date', 'desc');
+        $orderQuery = Order::query()
+            ->where('status', 'completed')
+            ->whereNotNull('finished_date')
+            ->whereNotNull('services');
+
+        if ($this->filterPeriod === 'this_month') {
+            $month = now()->month;
+            $year = now()->year;
+            $cashFlowQuery->whereMonth('date', $month)->whereYear('date', $year);
+            $orderQuery->whereMonth('finished_date', $month)->whereYear('finished_date', $year);
+            $monthLabel = now()->translatedFormat('F Y');
+            $this->filterMonth = str_pad($month, 2, '0', STR_PAD_LEFT);
+            $this->filterYear = $year;
+        } elseif ($this->filterPeriod === 'this_year') {
+            $year = now()->year;
+            $cashFlowQuery->whereYear('date', $year);
+            $orderQuery->whereYear('finished_date', $year);
+            $monthLabel = "Tahun $year";
+            $this->filterYear = $year;
+        } elseif ($this->filterPeriod === 'all_time') {
+            $monthLabel = 'Semua Waktu';
+        } else {
+            $month = min(12, max(1, (int) $this->filterMonth));
+            $year = min(2100, max(2000, (int) $this->filterYear));
+            $cashFlowQuery->whereMonth('date', $month)->whereYear('date', $year);
+            $orderQuery->whereMonth('finished_date', $month)->whereYear('finished_date', $year);
+            $monthLabel = Carbon::createFromDate($year, $month, 1)->translatedFormat('F Y');
+        }
 
         // ── Cash Flow records ──────────────────────────────────────────
-        $cashFlows = CashFlow::whereMonth('date', $month)
-            ->whereYear('date', $year)
-            ->orderBy('date', 'desc')
-            ->get();
+        $cashFlows = $cashFlowQuery->get();
 
         $totalIncome = $cashFlows->where('type', 'income')->sum('amount');
         $totalExpense = $cashFlows->where('type', 'expense')->sum('amount');
         $saldoAkhir = $totalIncome - $totalExpense;
 
         // ── Total penjualan per service (fix N+1) ──────────────────────
-        $orders = Order::whereMonth('created_at', $month)
-            ->whereYear('created_at', $year)
-            ->whereNotNull('services')
-            ->get();
+        $orders = $orderQuery->get();
 
         // Kumpulkan semua service_id dulu, lalu load sekaligus
         $allServiceIds = collect();
         foreach ($orders as $order) {
-            foreach ((array) $order->services as $item) {
+            foreach ($order->serviceLineItems() as $item) {
                 if ($sid = $item['service_id'] ?? null) {
                     $allServiceIds->push($sid);
                 }
@@ -80,10 +92,10 @@ class Report extends Page
 
         $serviceSales = [];
         foreach ($orders as $order) {
-            foreach ((array) $order->services as $item) {
+            foreach ($order->serviceLineItems() as $item) {
                 $serviceId = $item['service_id'] ?? null;
                 $qty = (int) ($item['quantity'] ?? 1);
-                $price = (float) ($item['price'] ?? 0);
+                $lineTotal = (float) ($item['line_total'] ?? 0);
 
                 if ($serviceId) {
                     if (! isset($serviceSales[$serviceId])) {
@@ -94,7 +106,7 @@ class Report extends Page
                         ];
                     }
                     $serviceSales[$serviceId]['quantity'] += $qty;
-                    $serviceSales[$serviceId]['revenue'] += $price;
+                    $serviceSales[$serviceId]['revenue'] += $lineTotal;
                 }
             }
         }
@@ -126,9 +138,7 @@ class Report extends Page
             'saldoAkhir' => $saldoAkhir,
             'serviceSales' => $serviceSales,
             'chartData' => $chartData,
-            'month' => $month,
-            'year' => $year,
-            'monthLabel' => Carbon::createFromDate($year, $month, 1)->translatedFormat('F Y'),
+            'monthLabel' => $monthLabel,
         ];
     }
 
@@ -140,6 +150,7 @@ class Report extends Page
                 ->color('success')
                 ->icon('heroicon-o-table-cells')
                 ->url(fn () => route('reports.export.excel', [
+                    'period' => $this->filterPeriod,
                     'month' => $this->filterMonth,
                     'year' => $this->filterYear,
                 ]))
@@ -150,6 +161,7 @@ class Report extends Page
                 ->color('danger')
                 ->icon('heroicon-o-document-arrow-down')
                 ->url(fn () => route('reports.export.pdf', [
+                    'period' => $this->filterPeriod,
                     'month' => $this->filterMonth,
                     'year' => $this->filterYear,
                 ]))

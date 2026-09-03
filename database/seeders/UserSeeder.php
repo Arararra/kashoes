@@ -4,37 +4,29 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        $faker = \Faker\Factory::create('id_ID');
+        $email = config('kashoes.super_admin.email');
+        $password = config('kashoes.super_admin.password');
+
+        if (blank($email) || blank($password)) {
+            $this->command?->warn('Super admin tidak dibuat: isi KASHOES_SUPER_ADMIN_EMAIL dan KASHOES_SUPER_ADMIN_PASSWORD.');
+
+            return;
+        }
 
         $superAdmin = User::firstOrCreate(
-            ['email' => 'superadmin@gmail.com'],
+            ['email' => $email],
             [
-                'name' => 'Super Admin',
-                'phone' => '081234567890',
-                'address' => 'Head Office',
-                'password' => Hash::make('admin123'),
+                'name' => config('kashoes.super_admin.name'),
+                'password' => $password,
             ]
         );
 
         $superAdmin->assignRole('super_admin');
 
-        // Create 5 customer users
-        foreach (range(1, 5) as $i) {
-            $user = User::create([
-                'name' => $faker->name(),
-                'email' => "customer{$i}@gmail.com",
-                'phone' => $faker->phoneNumber(),
-                'address' => $faker->address(),
-                'password' => Hash::make('password123'),
-            ]);
-
-            $user->assignRole('customer');
-        }
     }
 }

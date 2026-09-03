@@ -4,10 +4,9 @@ namespace App\Filament\Widgets;
 
 use App\Models\Order;
 use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\BadgeColumn;
 
 class LatestOrdersWidget extends BaseWidget
 {
@@ -15,10 +14,12 @@ class LatestOrdersWidget extends BaseWidget
 
     protected static ?int $sort = 3;
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     public function table(Table $table): Table
     {
+        $serviceNames = \App\Models\Service::pluck('name', 'id');
+
         return $table
             ->query(
                 Order::query()
@@ -34,12 +35,30 @@ class LatestOrdersWidget extends BaseWidget
 
                 TextColumn::make('services')
                     ->label('Services')
-                    ->formatStateUsing(function ($state) {
-                        if (empty($state)) return '—';
-                        $names = collect($state)->map(function ($s) {
-                            $service = \App\Models\Service::find($s['service_id'] ?? null);
-                            return $service?->name ?? '—';
-                        })->filter()->implode(', ');
+                    ->formatStateUsing(function ($state, Order $record) use ($serviceNames) {
+                        $items = $record->services;
+                        if (is_string($items)) {
+                            $items = json_decode($items, true);
+                        }
+                        if (! is_array($items) || empty($items)) {
+                            return '—';
+                        }
+
+                        $serviceIds = collect($items)
+                            ->pluck('service_id')
+                            ->filter()
+                            ->unique()
+                            ->toArray();
+
+                        if (empty($serviceIds)) {
+                            return '—';
+                        }
+
+                        $names = collect($serviceIds)
+                            ->map(fn ($id) => $serviceNames[$id] ?? null)
+                            ->filter()
+                            ->implode(', ');
+
                         return $names ?: '—';
                     })
                     ->limit(40),
@@ -53,20 +72,20 @@ class LatestOrdersWidget extends BaseWidget
                     ->label('Status')
                     ->badge()
                     ->formatStateUsing(fn ($state) => match ($state) {
-                        'pending'          => 'Pending',
-                        'in_progress'      => 'Diproses',
+                        'pending' => 'Pending',
+                        'in_progress' => 'Diproses',
                         'ready_for_pickup' => 'Siap Diambil',
-                        'completed'        => 'Selesai',
-                        'cancelled'        => 'Dibatalkan',
-                        default            => $state,
+                        'completed' => 'Selesai',
+                        'cancelled' => 'Dibatalkan',
+                        default => $state,
                     })
                     ->color(fn ($state) => match ($state) {
-                        'pending'          => 'primary',
-                        'in_progress'      => 'warning',
+                        'pending' => 'primary',
+                        'in_progress' => 'warning',
                         'ready_for_pickup' => 'info',
-                        'completed'        => 'success',
-                        'cancelled'        => 'danger',
-                        default            => 'gray',
+                        'completed' => 'success',
+                        'cancelled' => 'danger',
+                        default => 'gray',
                     }),
 
                 TextColumn::make('estimated_finished_date')

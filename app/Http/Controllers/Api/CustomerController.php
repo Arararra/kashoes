@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Customer;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class CustomerController extends ResourceController
 {
@@ -16,9 +19,9 @@ class CustomerController extends ResourceController
         return $action === 'store'
             ? [
                 'name' => 'required|string',
-                'phone' => 'required|string',
-                'address' => 'required|string',
-                'is_member' => 'required|boolean',
+                'phone' => 'nullable|string',
+                'address' => 'nullable|string',
+                'is_member' => 'sometimes|boolean',
             ]
             : [
                 'name' => 'sometimes|string',
@@ -26,5 +29,36 @@ class CustomerController extends ResourceController
                 'address' => 'sometimes|string',
                 'is_member' => 'sometimes|boolean',
             ];
+    }
+
+    public function index(): JsonResponse
+    {
+        Gate::authorize('viewAny', Customer::class);
+        $user = request()->user();
+        if ($user && $user->hasRole('customer')) {
+            $customer = \App\Models\Customer::where('user_id', $user->id)->first();
+            if (! $customer) {
+                return response()->json([]);
+            }
+
+            return response()->json([$customer]);
+        }
+
+        return response()->json(Customer::latest()->get());
+    }
+
+    public function update(Request $request, $id): JsonResponse
+    {
+        $customer = Customer::findOrFail($id);
+        Gate::authorize('update', $customer);
+
+        $rules = $this->validationRules('update');
+        if (! $request->user()->hasAnyRole(['admin', 'super_admin'])) {
+            unset($rules['is_member']);
+        }
+
+        $customer->update($request->validate($rules));
+
+        return response()->json($customer);
     }
 }

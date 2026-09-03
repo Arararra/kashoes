@@ -3,18 +3,19 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Spatie\Permission\Traits\HasRoles;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasRoles;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -26,8 +27,9 @@ class User extends Authenticatable implements FilamentUser
         'phone',
         'address',
         'email',
+        'google_id',
         'password',
-        'created_by'
+        'created_by',
     ];
 
     /**
@@ -53,6 +55,15 @@ class User extends Authenticatable implements FilamentUser
         ];
     }
 
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = [
+        'is_member',
+    ];
+
     public function canAccessPanel(Panel $panel): bool
     {
         return $this->hasAnyRole(['super_admin', 'admin']);
@@ -64,5 +75,35 @@ class User extends Authenticatable implements FilamentUser
     public function creator(): BelongsTo
     {
         return $this->belongsTo(self::class, 'created_by');
+    }
+
+    /**
+     * Get the customer profile associated with the user.
+     */
+    public function customer(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Customer::class, 'user_id');
+    }
+
+    /**
+     * Accessor for is_member attribute.
+     */
+    public function getIsMemberAttribute(): bool
+    {
+        return $this->customer ? (bool) $this->customer->is_member : false;
+    }
+
+    protected static function booted(): void
+    {
+        static::updated(function (User $user): void {
+            $changes = collect(['name', 'phone', 'address'])
+                ->filter(fn (string $field): bool => $user->wasChanged($field))
+                ->mapWithKeys(fn (string $field): array => [$field => $user->{$field}])
+                ->all();
+
+            if ($changes !== []) {
+                $user->customer?->updateQuietly($changes);
+            }
+        });
     }
 }

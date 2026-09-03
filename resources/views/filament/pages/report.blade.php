@@ -1,27 +1,38 @@
 {{-- resources/views/filament/pages/report.blade.php --}}
 <x-filament-panels::page>
 
-    {{-- ── FILTER BULAN & TAHUN ─────────────────────────────────────── --}}
+    {{-- ── FILTER PERIODE ─────────────────────────────────────── --}}
     <div class="flex flex-wrap items-center gap-3 mb-4">
+        
         <div class="flex items-center gap-2">
-            <label class="ks-filter-label">Bulan:</label>
-            <select wire:model.live="filterMonth" class="ks-filter-select">
-                @foreach(range(1, 12) as $m)
-                    <option value="{{ str_pad($m, 2, '0', STR_PAD_LEFT) }}">
-                        {{ \Carbon\Carbon::createFromDate(null, $m, 1)->translatedFormat('F') }}
-                    </option>
-                @endforeach
+            <label class="ks-filter-label">Periode:</label>
+            <select wire:model.live="filterPeriod" class="ks-filter-select" style="min-width: 150px;">
+                <option value="this_month">Bulan Ini</option>
+                <option value="this_year">Tahun Ini</option>
+                <option value="all_time">Semua Waktu</option>
+                <option value="custom">Pilih Bulan & Tahun...</option>
             </select>
         </div>
 
-        <div class="flex items-center gap-2">
-            <label class="ks-filter-label">Tahun:</label>
-            <select wire:model.live="filterYear" class="ks-filter-select">
-                @foreach(range(now()->year - 3, now()->year) as $y)
-                    <option value="{{ $y }}">{{ $y }}</option>
-                @endforeach
-            </select>
-        </div>
+        @if($filterPeriod === 'custom')
+            <div class="flex items-center gap-2">
+                <select wire:model.live="filterMonth" class="ks-filter-select">
+                    @foreach(range(1, 12) as $m)
+                        <option value="{{ str_pad($m, 2, '0', STR_PAD_LEFT) }}">
+                            {{ \Carbon\Carbon::createFromDate(null, $m, 1)->translatedFormat('F') }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <select wire:model.live="filterYear" class="ks-filter-select">
+                    @foreach(range(now()->year - 3, now()->year) as $y)
+                        <option value="{{ $y }}">{{ $y }}</option>
+                    @endforeach
+                </select>
+            </div>
+        @endif
 
         <span style="font-size:0.875rem; color:var(--ks-text-muted);">
             Periode: <strong style="color:var(--ks-text-secondary);">{{ $monthLabel }}</strong>

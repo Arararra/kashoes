@@ -12,7 +12,7 @@ class RevenueChartWidget extends ChartWidget
 
     protected static ?int $sort = 2;
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected function getData(): array
     {
@@ -20,8 +20,8 @@ class RevenueChartWidget extends ChartWidget
             $date = Carbon::now()->subMonths($monthsAgo);
 
             $revenue = Order::where('status', 'completed')
-                ->whereYear('created_at', $date->year)
-                ->whereMonth('created_at', $date->month)
+                ->whereYear('finished_date', $date->year)
+                ->whereMonth('finished_date', $date->month)
                 ->sum('total_price');
 
             $orders = Order::whereYear('created_at', $date->year)
@@ -29,35 +29,35 @@ class RevenueChartWidget extends ChartWidget
                 ->count();
 
             return [
-                'label'   => $date->translatedFormat('M Y'),
+                'label' => $date->translatedFormat('M Y'),
                 'revenue' => (float) $revenue,
-                'orders'  => $orders,
+                'orders' => $orders,
             ];
         });
 
         return [
             'datasets' => [
                 [
-                    'label'           => 'Revenue (Rp)',
-                    'data'            => $months->pluck('revenue')->toArray(),
-                    'borderColor'     => '#b84c65',
+                    'label' => 'Revenue (Rp)',
+                    'data' => $months->pluck('revenue')->toArray(),
+                    'borderColor' => '#b84c65',
                     'backgroundColor' => 'rgba(184, 76, 101, 0.12)',
-                    'fill'            => true,
-                    'tension'         => 0.4,
-                    'yAxisID'         => 'y',
+                    'fill' => true,
+                    'tension' => 0.4,
+                    'yAxisID' => 'y',
                     'pointBackgroundColor' => '#b84c65',
-                    'pointRadius'     => 4,
+                    'pointRadius' => 4,
                 ],
                 [
-                    'label'           => 'Jumlah Orders',
-                    'data'            => $months->pluck('orders')->toArray(),
-                    'borderColor'     => '#f59e0b',
+                    'label' => 'Jumlah Orders',
+                    'data' => $months->pluck('orders')->toArray(),
+                    'borderColor' => '#f59e0b',
                     'backgroundColor' => 'rgba(245, 158, 11, 0.10)',
-                    'fill'            => true,
-                    'tension'         => 0.4,
-                    'yAxisID'         => 'y1',
+                    'fill' => true,
+                    'tension' => 0.4,
+                    'yAxisID' => 'y1',
                     'pointBackgroundColor' => '#f59e0b',
-                    'pointRadius'     => 4,
+                    'pointRadius' => 4,
                 ],
             ],
             'labels' => $months->pluck('label')->toArray(),
@@ -74,19 +74,19 @@ class RevenueChartWidget extends ChartWidget
         return [
             'scales' => [
                 'y' => [
-                    'type'     => 'linear',
-                    'display'  => true,
+                    'type' => 'linear',
+                    'display' => true,
                     'position' => 'left',
-                    'ticks'    => [
+                    'ticks' => [
                         'callback' => 'function(value) { return "Rp " + new Intl.NumberFormat("id-ID").format(value); }',
                     ],
                 ],
                 'y1' => [
-                    'type'     => 'linear',
-                    'display'  => true,
+                    'type' => 'linear',
+                    'display' => true,
                     'position' => 'right',
-                    'grid'     => ['drawOnChartArea' => false],
-                    'ticks'    => [
+                    'grid' => ['drawOnChartArea' => false],
+                    'ticks' => [
                         'callback' => 'function(value) { return value + " orders"; }',
                     ],
                 ],

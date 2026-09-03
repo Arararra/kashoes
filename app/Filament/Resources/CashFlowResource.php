@@ -3,24 +3,20 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\CashFlowResource\Pages;
-use App\Filament\Resources\CashFlowResource\RelationManagers;
 use App\Models\CashFlow;
-use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Card;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Table;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\BadgeColumn;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 
 class CashFlowResource extends Resource
 {
@@ -57,6 +53,7 @@ class CashFlowResource extends Resource
 
                             TextInput::make('amount')
                                 ->numeric()
+                                ->minValue(0.01)
                                 ->required()
                                 ->prefix('Rp'),
 
@@ -93,15 +90,15 @@ class CashFlowResource extends Resource
                 // Ganti BadgeColumn dengan TextColumn::badge() (tidak deprecated)
                 TextColumn::make('type')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
-                        'income'  => 'success',
+                    ->color(fn (string $state): string => match ($state) {
+                        'income' => 'success',
                         'expense' => 'danger',
-                        default   => 'gray',
+                        default => 'gray',
                     })
                     ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'income'  => 'Pemasukan',
+                        'income' => 'Pemasukan',
                         'expense' => 'Pengeluaran',
-                        default   => $state,
+                        default => $state,
                     }),
 
                 TextColumn::make('title')
@@ -118,17 +115,13 @@ class CashFlowResource extends Resource
                 Tables\Filters\SelectFilter::make('type')
                     ->label('Tipe')
                     ->options([
-                        'income'  => 'Pemasukan',
+                        'income' => 'Pemasukan',
                         'expense' => 'Pengeluaran',
                     ]),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn (CashFlow $record): bool => $record->order_id === null),
             ]);
     }
 

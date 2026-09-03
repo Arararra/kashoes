@@ -2,29 +2,28 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Resources\OrderResource\Pages;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Service;
-use Filament\Forms;
+use Filament\Forms\Components\Card;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Grid;
-use Filament\Forms\Components\Card;
-use Filament\Forms\Components\Placeholder;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
-use App\Filament\Resources\OrderResource\Pages;
+use Filament\Tables\Table;
 
 class OrderResource extends Resource
 {
@@ -78,7 +77,7 @@ class OrderResource extends Resource
 
                                 TextInput::make('customer_phone')
                                     ->label('No Telepon')
-                                    ->required()
+                                    ->placeholder('-')
                                     ->disabled(fn (Get $get) => ! $get('customer_id'))
                                     ->dehydrated(),
 
@@ -86,8 +85,11 @@ class OrderResource extends Resource
                                     ->label('Status Member')
                                     ->content(function (Get $get) {
                                         $customerId = $get('customer_id');
-                                        if (! $customerId) return '—';
+                                        if (! $customerId) {
+                                            return '—';
+                                        }
                                         $customer = Customer::find($customerId);
+
                                         return $customer?->is_member
                                             ? '⭐ Member'
                                             : '— Non-Member';
@@ -101,9 +103,34 @@ class OrderResource extends Resource
                                 Textarea::make('customer_address')
                                     ->label('Alamat')
                                     ->columnSpanFull()
-                                    ->required()
+                                    ->placeholder('-')
                                     ->disabled(fn (Get $get) => ! $get('customer_id'))
                                     ->dehydrated(),
+
+                                TextInput::make('latitude')
+                                    ->label('Latitude')
+                                    ->numeric()
+                                    ->disabled(),
+
+                                TextInput::make('longitude')
+                                    ->label('Longitude')
+                                    ->numeric()
+                                    ->disabled(),
+
+                                Placeholder::make('map_link')
+                                    ->label('Lokasi Peta')
+                                    ->content(function (Get $get) {
+                                        $lat = $get('latitude');
+                                        $lng = $get('longitude');
+                                        if (! $lat || ! $lng) {
+                                            return '— Belum ada lokasi';
+                                        }
+
+                                        $url = "https://www.google.com/maps/search/?api=1&query={$lat},{$lng}";
+
+                                        return new \Illuminate\Support\HtmlString("<a href=\"{$url}\" target=\"_blank\" class=\"text-primary-600 font-bold underline\">Buka di Google Maps 📍</a>");
+                                    })
+                                    ->columnSpanFull(),
                             ])
                             ->columns(2),
 
@@ -122,6 +149,15 @@ class OrderResource extends Resource
                                             ->numeric()
                                             ->disabled()
                                             ->dehydrated()
+                                            ->afterStateHydrated(function (Get $get, Set $set, $state): void {
+                                                $quantity = max(1, (int) ($get('quantity') ?? 1));
+                                                $unitPrice = (float) (Service::find($get('service_id'))?->price ?? 0);
+                                                $storedPrice = (float) ($state ?? 0);
+
+                                                if ($quantity > 1 && abs($storedPrice - ($unitPrice * $quantity)) < 0.01) {
+                                                    $set('price', $unitPrice);
+                                                }
+                                            })
                                             ->required(),
 
                                         TextInput::make('quantity')
@@ -135,7 +171,7 @@ class OrderResource extends Resource
 
                                         Textarea::make('description')
                                             ->columnSpanFull()
-                                            ->required()
+                                            ->placeholder('-')
                                             ->live(onBlur: true),
                                     ])
                                     ->columns(2)
@@ -153,7 +189,8 @@ class OrderResource extends Resource
 
                                 DatePicker::make('finished_date')
                                     ->label('Finished Date')
-                                    ->nullable(),
+                                    ->disabled()
+                                    ->dehydrated(false),
 
                                 TextInput::make('discount')
                                     ->label('Diskon (Rp)')
@@ -201,9 +238,39 @@ class OrderResource extends Resource
 
     public static function table(Table $table): Table
     {
+        $serviceNames = Service::pluck('name', 'id');
+
         return $table
+            ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('customer.name')->label('Customer')->searchable(),
+                TextColumn::make('services')
+                    ->label('Services')
+                    ->formatStateUsing(function ($state, Order $record) use ($serviceNames) {
+                        $items = $record->services;
+                        if (is_string($items)) {
+                            $items = json_decode($items, true);
+                        }
+                        if (! is_array($items) || empty($items)) {
+                            return '—';
+                        }
+
+                        $serviceIds = collect($items)
+                            ->pluck('service_id')
+                            ->filter()
+                            ->unique()
+                            ->toArray();
+
+                        if (empty($serviceIds)) {
+                            return '—';
+                        }
+
+                        return collect($serviceIds)
+                            ->map(fn ($id) => $serviceNames[$id] ?? null)
+                            ->filter()
+                            ->implode(', ') ?: '—';
+                    })
+                    ->limit(30),
                 TextColumn::make('estimated_finished_date')->label('Est. Finished Date')->date(),
                 TextColumn::make('finished_date')->label('Finished Date')->date()->placeholder('—'),
                 TextColumn::make('discount')->label('Diskon')->money('IDR')->placeholder('—'),
@@ -267,10 +334,10 @@ class OrderResource extends Resource
     private static function recalculate(Get $get, Set $set): void
     {
         $serviceId = $get('service_id');
-        $quantity  = (int) ($get('quantity') ?: 1);
+        $quantity = (int) ($get('quantity') ?: 1);
 
         $service = Service::find($serviceId);
-        $price   = ($service?->price ?? 0) * $quantity;
+        $price = $service?->price ?? 0;
 
         $set('price', $price);
 
@@ -282,7 +349,8 @@ class OrderResource extends Resource
         $services = $get('../../services') ?? [];
 
         $subtotal = collect($services)->sum(
-            fn ($item) => (int) ($item['price'] ?? 0)
+            fn ($item) => (float) ($item['price'] ?? 0)
+                * max(1, (int) ($item['quantity'] ?? 1))
         );
 
         $set('../../subtotal', $subtotal);
@@ -294,11 +362,12 @@ class OrderResource extends Resource
     {
         $services = $get('../../services') ?? $get('services') ?? [];
         $subtotal = collect($services)->sum(
-            fn ($item) => (int) ($item['price'] ?? 0)
+            fn ($item) => (float) ($item['price'] ?? 0)
+                * max(1, (int) ($item['quantity'] ?? 1))
         );
 
         $discount = (float) ($get('../../discount') ?? $get('discount') ?? 0);
-        $total    = max(0, $subtotal - $discount);
+        $total = max(0, $subtotal - $discount);
 
         $set('../../total_price', $total);
         $set('total_price', $total);
